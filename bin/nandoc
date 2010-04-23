@@ -1,0 +1,9 @@
+#!/usr/bin/env ruby
+$LOAD_PATH.unshift(File.expand_path('../../lib', __FILE__))
+
+require 'nandoc'
+require 'nanoc3'
+require 'nanoc3/cli'
+
+Nanoc3::CLI::Base.shared_base.run(ARGV)
+require File.expand_path('../lib/trollip.rb', __FILE__)
