@@ -1,0 +1,20 @@
+--- a/stylesheet.css	0000-00-00 00:00:00.000000000 -0000
++++ b/stylesheet.css	0000-00-00 00:00:00.000000000 -0000
+@@ -1,12 +1,15 @@
+ * {
+   margin: 0;
+   padding: 0;
+-
+-  font-family: Georgia, Palatino, Times, 'Times New Roman', sans-serif;
++  /* no fonts here */
+ }
+
+ body {
+   background: #fff;
++  /*font-family: Georgia, Palatino, Times, 'Times New Roman', sans-serif;
++    we moved this from the * class to here, then decided nah, stick with
++    default browser font to keep it simple and neutral
++  */
+ }
+
+ a {
