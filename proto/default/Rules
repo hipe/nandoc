@@ -28,13 +28,13 @@ nandoc_ds[:config][:source_file_basenames].each do |name|
 end
 
 # if we are using e.g. README.md for main index. hack alert!
-if nandoc_ds[:config][:use_as_main_index].to_s =~ /\.md\Z/ 
+if nandoc_ds[:config][:use_as_main_index].to_s =~ /\.md\Z/
   compile '/' do
     filter :erb
     filter :kramdown
-    layout 'default'    
+    layout 'default'
   end
-end 
+end
 
 route '/css/*' do
   if item.children.empty?
