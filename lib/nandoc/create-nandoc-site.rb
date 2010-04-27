@@ -2,6 +2,7 @@ require File.dirname(__FILE__)+'/treebis/lib/treebis.rb'
 
 module NanDoc
   class CreateNanDocSite < ::Nanoc3::CLI::Commands::CreateSite
+    include OptsNormalizer, TaskCommon
     #
     # Most of this is fluff/filler.  The key is that 1)
     # in run() we set the datasource to be NanDoc::DataSource and 2)
@@ -22,19 +23,30 @@ module NanDoc
 
     def usage; "nandoc create_nandoc_site <path>" end
 
-    def option_definitions; [] end
+    def option_definitions
+      [ { :long => 'patch-hack', :short => 'p', :argument => :none,
+          :desc => 'tell treebis to use files not patches when necessary'
+      } ]
+    end
 
     def run options, arguments
+      normalize_opts options
       if options[:datasource]
-        $stderr.puts("for now datasource is hardcoded to be nandoc.")
-        $stderr.puts "usage: #{usage}"
-        exit 1
+        task_abort <<-ABO.gsub(/\n */,"\n").trim
+        for now datasource is hardcoded to be nandoc.
+        usage: #{usage}
+        ABO
       end
       options[:datasource] = 'nandoc'
+      @patch_hack = options[:patch_hack]
       super(options, arguments)
     end
 
   protected
+
+    #
+    # see SupremeStderrHack
+    #
     def initiate_the_supreme_hack_of_the_standard_error_stream
       base = Nanoc3::CLI::Base
       return if base.instance_methods.include?("print_error_orig")
@@ -47,12 +59,14 @@ module NanDoc
 
     #
     # This is the crux of the whole thing: make the site as the parent
-    # does then apply the patch.
+    # does, then apply the patch.
     #
     def site_populate
       initiate_the_supreme_hack_of_the_standard_error_stream
       super
-      Treebis.dir_task(NanDoc::Root+'/proto/default').on(FileUtils.pwd).run
+      Treebis.dir_task(NanDoc::Root+'/proto/default').on(FileUtils.pwd).run(
+        :patch_hack => @patch_hack
+      )
     end
 
     class SupremeStderrHack
@@ -73,11 +87,14 @@ module NanDoc
         when :looking_for_error_header
           if a.first && a.first.include?('/!\ ERROR /!\\')
             @state = :waiting_for_end_of_error_box
-            @ui.puts '+--- /!\ ERROR /!\ --------------------------------------------+'
-            @ui.puts '| An exception occured while running nandoc. If you think this |'
-            @ui.puts '| is a bug in nandoc (likely), please report it at             |'
-            @ui.puts '| <http://github.com/hipe/nandoc/issues> -- thanks!            |'
-            @ui.puts '+--------------------------------------------------------------+'
+            @ui.puts <<-HERE.gsub(/^ +/,'')
+           +--- /!\ ERROR /!\ --------------------------------------------+
+           | An exception occured while running nandoc. If you think this |
+           | is a bug in nandoc (likely), please report it at             |
+           | <http://github.com/hipe/nandoc/issues> -- thanks!            |
+           | (it is very likely a treebis patch failure)                  |
+           +--------------------------------------------------------------+
+           HERE
           else
             @ui.puts(*a) # probably just whitespace?
           end
