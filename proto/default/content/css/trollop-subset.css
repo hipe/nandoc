@@ -71,3 +71,12 @@ color:#882277;
 }
 .ruby .escape {
 color:#227777;
+}
+
+#sidebar ul.nested {
+margin: 0 0;
+}
+
+#sidebar ul.nested li {
+line-height: 1em;
+}

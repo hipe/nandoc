@@ -1,0 +1,50 @@
+<!DOCTYPE HTML>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>A Brand New nanoc Site - <%= @item[:title] %></title>
+    <link rel="stylesheet" type="text/css" href="/css/nanoc-dist-altered.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="/css/trollop-subset.css" media="screen">    
+    <meta name="generator" content="nanoc 3.1.2">
+  </head>
+  <body>
+    <div id="main">
+      <%= yield %>
+    </div>
+    <div id="sidebar">
+      <h2>Documentation</h2>
+      <ul>
+        <li><a href="http://nanoc.stoneship.org/docs/">Documentation</a></li>
+        <li><a href="http://nanoc.stoneship.org/docs/3-getting-started/">Getting Started</a></li>
+      </ul>
+      <h2>Community</h2>
+      <ul>
+        <li><a href="http://groups.google.com/group/nanoc/">Discussion Group</a></li>
+        <li><a href="irc://chat.freenode.net/#nanoc">IRC Channel</a></li>
+        <li><a href="http://projects.stoneship.org/trac/nanoc/">Wiki</a></li>
+      </ul>
+      <h2>Site Mappzors</h2>      
+        <%=
+        home_page = @items.find { |i| i.identifier == '/' }
+        nandoc_sitemap(home_page, :tabs => 4, :glyphs => :right )
+        %>
+        <h2>Site Mappzors STATIC</h2>
+        <ul>
+          <li class='lvl1'><a>foo</a>
+            <ul class='nested'>
+              <li class='lvl2'><a>bar</a></li>
+              <li class='lvl2'><a>baz</a></li>
+              <li class='lvl2'><a>bufffo</a>
+                <ul class='nested'>
+                  <li class='lvl3'><a>bazzo</a></li>
+                  <li class='lvl3'><a>bazzo2</a></li>              
+                </ul>
+              </li>            
+            </ul>
+          </li>
+          <li class='lvl1'><a>barrr</a></li>
+        </ul>    
+      </div>      
+    </div>
+  </body>
+</html>
