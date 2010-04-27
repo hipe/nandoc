@@ -1,11 +1,11 @@
 ### Abstract
 
-This file presents three implementation alternatives of NanDoc site creation, and then explains why we are going with the one we are going with at the time of this writing.  (It was also a chance for me to experiment with markdown footnotes!)
+This document presents three implementation alternatives of NanDoc site creation, and then explains why we are going with the one we are going with at the time of this writing.  (It was also a chance for me to experiment with markdown footnotes!)
 
 
 ### Prototypes
 
-Each folder in this folder is a 'prototype' nanoc installation. (Probably only one folder, called 'default'.)
+Each folder in this folder is a 'prototype' nanoc installation. (Probably only one folder, called 'default'.)  (The folder called 'misc' holds one-off templates for ad-hoc stuff, maybe for helpers etc.)
 
 The result of each such prototype is comparable to the filetree you get from a default nanoc 'create_site' command, but altered accordingly to be a NanDoc site, whatever that will come to mean.
 
