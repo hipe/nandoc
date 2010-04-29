@@ -1,4 +1,9 @@
 module NanDoc
+  module CliCommandHelpers
+    def invocation_name
+      File.basename($PROGRAM_NAME)
+    end
+  end
   module OptsNormalizer
     def normalize_opts opts
       opts.keys.select{|x| x.to_s.index('-') }.each do |k|

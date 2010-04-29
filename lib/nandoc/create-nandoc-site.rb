@@ -1,46 +1,104 @@
-require File.dirname(__FILE__)+'/treebis/lib/treebis.rb'
-
 module NanDoc
   class CreateNanDocSite < ::Nanoc3::CLI::Commands::CreateSite
-    include OptsNormalizer, TaskCommon
     #
-    # Most of this is fluff/filler.  The key is that 1)
+    # Most of this is fluff/filler/hacks.  The key is that 1)
     # in run() we set the datasource to be NanDoc::DataSource and 2)
     # after the parent's site_populate() is run we apply our patch to it.
     #
 
+
+    include OptsNormalizer, TaskCommon, CliCommandHelpers
+
+
+    #
+    # this gives us a tmpdir to write to. if we need it elsewhere
+    # it should be moved up to NanDoc
+    #
+    Treebis::PersistentDotfile.include_to(self, './nandoc.json',
+      :file_utils => Config.file_utils
+    )
+
+
     def name; 'create_nandoc_site' end
 
-    def aliases; [ 'cnds', 'cns' ] end
+    def aliases; [ 'cnds', 'cns', 'cs' ] end # override create_site short!
 
     def short_desc; 'create a nandoc site' end
 
     def long_desc
-      'Create a new site at the given path. This builds on the ' +
-      'create_site nandoc command.  Please see that for more '+
-      'information.  Run this next to your README.md file.'
+      <<-D.gsub(/\n +/,' ')
+      (nanDoc hack) Create a new site at the given path. This builds on the
+      create_site nanoc3 command.  Please see that for more
+      information.  Run this next to your README.md file.
+      D
     end
 
-    def usage; "nandoc create_nandoc_site <path>" end
+    def usage; "nandoc create_nandoc_site [-m] <path>" end
 
     def option_definitions
-      [ { :long => 'patch-hack', :short => 'p', :argument => :none,
-          :desc => 'tell treebis to use files not patches when necessary'
-      } ]
+      [
+        { :long => 'patch-hack', :short => 'p', :argument => :none,
+          :desc => '(nanDoc hack) use files not patches when necessary' },
+
+        { :long => 'merge-hack', :short => 'm', :argument => :none,
+          :desc =>
+            '(nanDoc hack) when site already exists do something clever'
+        },
+        { :long => 'merge-hack-reverse', :short => 'M', :argument => :none,
+          :desc =>
+            '(nanDoc hack) show the reverse diff of above.'
+        }
+      ]
     end
 
-    def run options, arguments
-      normalize_opts options
-      if options[:datasource]
-        task_abort <<-ABO.gsub(/\n */,"\n").trim
+    #
+    # On the _merge option: when we are doing a merge with a generated
+    # site and we want to generate a fresh site, we want to turn the below
+    # stderr hack off.
+    #
+    def run(opts, args, method_opts={:_merge=>true})
+      normalize_opts opts
+      run_opts_process opts
+      #
+      # awful: see if nanoc triggers the error message about site
+      # already existing, then take action
+      #
+      if method_opts[:_merge]
+        StdErrListener.new do |listener|
+          listener.when(/A site at '.*' already exists/) do
+            throw :nandoc_hack, :site_already_exists
+          end
+        end
+      end
+      ret = nil
+      thing = catch(:nandoc_hack) do
+        ret = super(opts, args)
+        :normal
+      end
+      case thing
+      when :site_already_exists
+        site_already_exists opts, args
+      when :normal
+        ret
+      else
+        fail("hack fail: #{thing.inspect}")
+      end
+    end
+
+    def run_opts_process opts
+      task_abort("you can't have both -M and -m") if
+        opts[:merge_hack] && opts[:merge_hack_reverse]
+      if opts[:datasource]
+        task_abort <<-ABO.gsub(/\n */,"\n").strip
         for now datasource is hardcoded to be nandoc.
         usage: #{usage}
         ABO
       end
-      options[:datasource] = 'nandoc'
-      @patch_hack = options[:patch_hack]
-      super(options, arguments)
+      opts[:datasource] = 'nandoc'
+      @patch_hack = opts[:patch_hack]
+      nil
     end
+    private :run_opts_process
 
   protected
 
@@ -57,6 +115,24 @@ module NanDoc
       end
     end
 
+
+    def site_already_exists opts, args
+      path = args.first
+      if ! (opts[:merge_hack] || opts[:merge_hack_reverse])
+        task_abort <<-FOO.gsub(/^ +/,'').chop
+          A site at '#{path}' already exists.
+          If you want to try and merge in changes from the site generator
+          (this might just generate a diff), try the --merge-hack (-m) option.
+          see `#{invocation_name} help #{name}` for more information
+        FOO
+      else
+        require File.dirname(__FILE__)+'/site-merge.rb'
+        SiteMerge.new(self).site_merge(opts, args)
+      end
+    end
+
+
+
     #
     # This is the crux of the whole thing: make the site as the parent
     # does, then apply the patch.
@@ -64,10 +140,50 @@ module NanDoc
     def site_populate
       initiate_the_supreme_hack_of_the_standard_error_stream
       super
-      Treebis.dir_task(NanDoc::Root+'/proto/default').on(FileUtils.pwd).run(
-        :patch_hack => @patch_hack
-      )
+      task = Treebis.dir_task(NanDoc::Root+'/proto/default')
+      task.file_utils = Config.file_utils
+      task.on(FileUtils.pwd).run(:patch_hack => @patch_hack)
     end
+
+
+    #
+    # Somehow legitimize these awful hacks with an entire class
+    #
+    class StdErrListener
+      def initialize &block
+        @prev = $stderr
+        $stderr = self
+        @expired = false
+        @whens = []
+        block.call(self)
+      end
+      def when regex, &block
+        @whens.push(:regex=>regex, :block=>block)
+      end
+      def puts *args
+        if @expired
+          fail("hack failed when trying to write: #{str}")
+        elsif args.size != 1
+          expire!
+          $stderr.puts(*args)
+        else
+          found = @whens.detect{|x| x[:regex] =~ args.first}
+          if found
+            found[:block].call
+          else
+            expire!
+            $stderr.puts(*args)
+          end
+        end
+      end
+      alias_method :write, :puts # supreme & problematic
+    private
+      def expire!
+        $stderr = @prev
+        @expired = true
+      end
+    end
+
 
     class SupremeStderrHack
       #
@@ -101,7 +217,8 @@ module NanDoc
         when :waiting_for_end_of_error_box
           if a.first && a.first =~ /\+-+\+/
             $stderr = @ui
-            @state = :hack_failed # nothing should be callig our puts() method any more
+            @state = :hack_failed
+              # nothing should be callig our puts() method any more
           end
         when :hack_failed
           fail("hack failed")
