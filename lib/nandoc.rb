@@ -13,7 +13,7 @@ require me + '/treebis/lib/treebis.rb'
 require me + '/config.rb'
 require me + '/cri-hacks.rb'
 require me + '/data-source.rb'
-require me + '/create-nandoc-site.rb'
+require me + '/commands/create-nandoc-site.rb'
 require me + '/item-class-hacks.rb'
 require me + '/helpers.rb'
 
