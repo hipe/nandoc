@@ -51,9 +51,7 @@ module NanDoc::Helpers::NanDocHelpers
         HTML
       end
       it.children_are do |node|
-        node.children.select{|c| c.nandoc_visible? }.sort do |a,b|
-          a.nandoc_title <=> b.nandoc_title
-        end
+        node.children.select{|c| c.nandoc_visible? }.sort_by(&:nandoc_title)
       end
       it.render_child do |m, node| <<-HTML
         <li class='lvl#{m.level}'>
@@ -73,9 +71,9 @@ module NanDoc::Helpers::NanDocHelpers
     # @api private
     # this used internally to implement the site maps; you shouldn't
     # ever need to instantiate it directly.
-    # This is not optimized for speed.  It is optimized for debugging.
+    # This is not optimized for speed.  It is optimized for debug-ging.
     # It is littered with short variable names and narrow, tall chains
-    # of statements not because I spent 8 hours debugging this i swear.
+    # of statements not because I spent 8 hours debug-ging this i swear.
     #
 
     def initialize children, opts, &block
@@ -117,8 +115,8 @@ module NanDoc::Helpers::NanDocHelpers
     #
     # reindent a block by striping leading whitespace from lines evenly
     # and then re-indenting each line according to our indent.
-    # we could make this more complicated but whatever.
-    # it's a goddam static site generator. it could also be simpler!
+    # this could be simpler, it has been more complicated
+    # we do it languidly because we can
     #
     def reindent h1, offset=0
       indent_by = @tab * (@tabs+offset)
@@ -200,7 +198,10 @@ module NanDoc::Helpers::NanDocHelpers
 
     def glyphs_right_for_child
       @glyphs_right_for_child ||= begin
-        level == 0 ? [] : begin
+        case level
+        when 0; []     # e.g. the object that is rendering [home]
+        when 1; []     # e.g. home, the (lvl2) children have no inheirited
+        else
           x = [ is_last ? UseThisForBlanks.call(self) : HvVert ]
           x.concat(parent.glyphs_right_for_child) if parent
           x
@@ -209,10 +210,15 @@ module NanDoc::Helpers::NanDocHelpers
     end
 
     def glyphs_right
-      these = [ is_last ? ArcUpL : HvVtLf ]
-      these.concat( parent.glyphs_right_for_child ) if parent
-      # these.concat Array.new([0, level-1].max, DashQV)
-      these.join('')
+      case level
+      when 0; fail('never')
+      when 1; ''
+      else
+        these = [ is_last ? ArcUpL : HvVtLf ]
+        these.concat( parent.glyphs_right_for_child ) if parent
+        # these.concat Array.new([0, level-1].max, DashQV)
+        these.join('')
+      end
     end
   end
 end
