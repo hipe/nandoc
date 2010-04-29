@@ -9,16 +9,6 @@ module NanDoc
 
     include OptsNormalizer, TaskCommon, CliCommandHelpers
 
-
-    #
-    # this gives us a tmpdir to write to. if we need it elsewhere
-    # it should be moved up to NanDoc
-    #
-    Treebis::PersistentDotfile.include_to(self, './nandoc.persistent.json',
-      :file_utils => Config.file_utils
-    )
-
-
     def name; 'create_nandoc_site' end
 
     def aliases; [ 'cnds', 'cns', 'cs' ] end # override create_site short!

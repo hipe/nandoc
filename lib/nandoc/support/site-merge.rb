@@ -4,6 +4,8 @@ module NanDoc
   class SiteMerge
     include Treebis::DirAsHash
     include Treebis::Capture3
+    NanDoc.persistent_delegate_to(self) # empty_tmpdir()
+
     def initialize site_creator
       @creator = site_creator
     end
@@ -16,7 +18,7 @@ module NanDoc
       out, err, diff = capture3 do
         $stdout.puts(
         "#------------------ (this is for the merge hack:) -----------------")
-        @tmpdir = @creator.empty_tmpdir('ridiculous')
+        @tmpdir = empty_tmpdir('ridiculous')
         existing_subset_path = temp_site_subset(existing_site_path)
         generated_site_path  = temp_generated_site opts
         order = [existing_subset_path, generated_site_path]
