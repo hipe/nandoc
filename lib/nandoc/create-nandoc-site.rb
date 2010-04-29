@@ -14,7 +14,7 @@ module NanDoc
     # this gives us a tmpdir to write to. if we need it elsewhere
     # it should be moved up to NanDoc
     #
-    Treebis::PersistentDotfile.include_to(self, './nandoc.json',
+    Treebis::PersistentDotfile.include_to(self, './nandoc.persistent.json',
       :file_utils => Config.file_utils
     )
 
@@ -169,6 +169,7 @@ module NanDoc
         else
           found = @whens.detect{|x| x[:regex] =~ args.first}
           if found
+            expire!
             found[:block].call
           else
             expire!
