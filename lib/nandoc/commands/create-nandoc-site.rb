@@ -126,7 +126,7 @@ module NanDoc
           see `#{invocation_name} help #{name}` for more information
         FOO
       else
-        require File.expand_path('../../site-merge.rb', __FILE__)
+        require File.expand_path('../../support/site-merge.rb', __FILE__)
         SiteMerge.new(self).site_merge(opts, args)
       end
     end
