@@ -29,3 +29,13 @@ task :hack do
   this_path = File.dirname(__FILE__)
   FileUtils.ln_s(this_path, kill_path, :verbose => 1)
 end
+
+desc "remove temporary, generated files like coverage"
+task :prune do
+  require File.dirname(__FILE__)+'/lib/nandoc.rb'
+  file_utils = NanDoc::Config.file_utils
+  these = ['./lib/nandoc/treebis/coverage']
+  these.each do |this|
+    file_utils.remove_entry_secure(this, :verbose=>true)
+  end
+end
