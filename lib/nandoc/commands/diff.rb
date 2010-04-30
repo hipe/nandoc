@@ -41,29 +41,32 @@ module NanDoc::Commands
     def usage; "nandoc diff [-c|-C|-p|-P] [--css|] [-Y [-b]] [<path>]" end
 
     def option_definitions
+      pttp = 'pass-thru to patch. only for use with -Y'
       [ { :long => 'backup', :short => 'b', :argument=>:none,
-          :desc => 'when applying patches, makes backups. see `patch -b`. '<<
-                   'This is only for use with -Y'
+          :desc => pttp
+        },
+        { :long => 'content-to-output', :short => 'c', :argument => :none,
+          :desc => 'show diff or patch content with output (default)'
         },
         { :long => 'css',  :short => 's', :argument => :none,
           :desc => 'subset: css -- ' <<
           'show diffs in css files between things (default, only option)'
         },
-        { :long => 'content-to-output', :short => 'c', :argument => :none,
-          :desc => 'show diff or patch content with output (default)'
-        },
-        { :long => 'proto-to-content', :short => 'p', :argument => :none,
-          :desc => ("show diff or patch prototype with content\n"<<
-                    (' '*22)+"(this would be for patching/altering nandoc)")
-        },
-        { :long => 'output-to-content', :short => 'C', :argument => :none,
-          :desc => 'show diff or patch output with content (kind of weird)'
+        { :long => 'dry-run',  :short => 'r', :argument => :none,
+          :desc => pttp
         },
         { :long => 'content-to-proto', :short => 'P', :argument => :none,
           :desc => 'show diff or patch content with proto (sure why not)'
         },
+        { :long => 'output-to-content', :short => 'C', :argument => :none,
+          :desc => 'show diff or patch output with content (kind of weird)'
+        },
         { :long => 'patch', :short => 'Y', :argument => :none,
           :desc => 'apply the patch to the target (no undo!)'
+        },
+        { :long => 'proto-to-content', :short => 'p', :argument => :none,
+          :desc => ("show diff or patch prototype with content\n"<<
+                    (' '*22)+"(this would be for patching/altering nandoc)")
         }
       ]
     end
@@ -112,6 +115,7 @@ module NanDoc::Commands
       # Make a tempdir and write the diff to a file
       tmpdir = empty_tmpdir('for-a-patch')
       Treebis::Task.new do
+        notice 'command', diff.command
         write 'diff', diff.to_s
       end.on(tmpdir).run
 
@@ -182,14 +186,21 @@ module NanDoc::Commands
       end
     end
 
+    PatchPassThru = [:backup, :dry_run]
     def process_diff_opts opts
-      task_abort "--backup cannot be used with diffing only patching.\n"<<
-      "usage: #{usage}\n#{invite_to_more_command_help}" if opts[:backup]
-      nil
+      if (bad = opts.keys & PatchPassThru).any?
+        bads = bad.map{|x| unnormalize_opt_key(x)}.join('and')
+        task_abort "#{bads} cannot be used with diffing only patching.\n"<<
+          "usage: #{usage}\n#{invite_to_more_command_help}"
+      end
     end
 
     def process_patch_opts opts
-      {:pass_thru => opts[:backup] ? {'--backup'=>''} : {}}
+      ptks = opts.keys & PatchPassThru
+      pths = ptks.map{|k| unnormalize_opt_key(k)}
+      ptha = Hash[pths.zip(Array.new(pths.size, ''))]
+      ptha['--posix'] = '' # always on else patches don't work
+      {:pass_thru => ptha }
     end
   end
 end
