@@ -47,7 +47,7 @@ module NanDoc
     # stderr hack off.
     #
     def run(opts, args, method_opts={:_merge=>true})
-      normalize_opts opts
+      opts = normalize_opts opts
       run_opts_process opts
       #
       # awful: see if nanoc triggers the error message about site
