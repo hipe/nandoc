@@ -16,27 +16,19 @@ module NanDoc::Commands
 
     def long_desc
       <<-LONG_DESC.gsub(/\n +/,' ')
-      This eases the ridiculous pain of tweaking your generated css
-      and wanting to push it back to your <my-site> folder, and maybe
-      other things like that.
-      \n
-      Patch <my-site>/content with what's in <my-site>/output with
-      (--content-to-output|-c).  This is the default.
-      \n
-      Patch <prototypes>/<the-prototype> with what's in <my-site>/content
-      with (--content-to-prototype|-p).  This would be for altering the
-      nanDoc prototypes with what you have in your <my-site> folder.  This
-      would be for hacking nanDoc.
-      \n
-      Wierd bonus feature: Do the reverse of the above with -P or -C.
-      \n
-      This operates on a subset of the trees, for now only the files in the
-      'css/' folder. (you can use the --css option for this but there is no
-      reason to at the time of this writing.)
-      \n
-      (In the future it might support more options for patching
-      prototypes with entire <my-sites>)
-      \n
+      Patch a subtree of <my-site>/content with the same subtree in
+      <my-site>/output with (--content-to-output|-c). (default). Opposite
+      direction with -C.
+
+      Patch a subtree of <prototypes>/<the-prototype> with the same
+      subtree of <my-site>/content with (--content-to-prototype|-p).
+      (For patching nanDoc prototypes.) Opposite direction with -P.
+
+      This operates on a subset of the indicated trees, for now only the files
+      in the 'css/' folder. (This is what the --css option is for but for now
+      it is the default and the only option so it is not necessary to
+      indicate.)
+
       So, with this wierd chain, you can tweak your CSS, for example,
       in the generated output and then push these changes all the way back to
       the prototype with -cY and then -pY
@@ -46,13 +38,16 @@ module NanDoc::Commands
       LONG_DESC
     end
 
-    def usage; "nandoc diff [-c|-C|-p|-P] [--css|] [-Y] [<path>]" end
+    def usage; "nandoc diff [-c|-C|-p|-P] [--css|] [-Y [-b]] [<path>]" end
 
     def option_definitions
-      [
+      [ { :long => 'backup', :short => 'b', :argument=>:none,
+          :desc => 'when applying patches, makes backups. see `patch -b`. '<<
+                   'This is only for use with -Y'
+        },
         { :long => 'css',  :short => 's', :argument => :none,
-          :desc => ('subset: css -- ' <<
-          'show diffs in css files between things (default, only option)')
+          :desc => 'subset: css -- ' <<
+          'show diffs in css files between things (default, only option)'
         },
         { :long => 'content-to-output', :short => 'c', :argument => :none,
           :desc => 'show diff or patch content with output (default)'
@@ -74,26 +69,57 @@ module NanDoc::Commands
     end
 
     def run opts, args
-      normalize_opts opts
+      opts = normalize_opts opts
       app_path = deduce_app_path_or_fail(args)
       src, dest = deduce_src_and_dest app_path, opts
       subset = deduce_subset opts
-      go_diff src, dest, subset, app_path
+      if opts[:patch]
+        patch_opts = process_patch_opts(opts)
+        go_patch src, dest, subset, app_path, patch_opts
+      else
+        process_diff_opts(opts) and fail("no more opts for this guy")
+        go_diff src, dest, subset, app_path
+      end
     end
 
   private
 
-    def go_diff *a
+    def get_diff_object(*a)
       src_path, dest_path = deduce_paths(*a)
       diff = NanDoc::DiffProxy.diff(src_path, dest_path)
       if diff.error?
         task_abort diff.error
       end
+      diff
+    end
+
+    def go_diff(*a)
+      diff = get_diff_object(*a)
       if $stdout.tty? && NanDoc::Config.colorize?
         diff.colorize($stdout, :styles => NanDoc::Config.diff_stylesheet)
       else
         $stdout.puts diff.to_s
       end
+    end
+
+    def go_patch *a
+      patch_opts = a.pop
+      pass_thru = patch_opts[:pass_thru] or fail('suxxorz')
+      diff = get_diff_object(*a)
+      task_abort("subset not yes supported: %s" %
+        unnormalize_opt_key(@subset) ) unless @subset == :css
+
+      # Make a tempdir and write the diff to a file
+      tmpdir = empty_tmpdir('for-a-patch')
+      Treebis::Task.new do
+        write 'diff', diff.to_s
+      end.on(tmpdir).run
+
+      # Patch this sucker and pray we didn't mess up too badly
+      Treebis::Task.new do
+        from tmpdir
+        apply 'diff', pass_thru
+      end.on('.').run
     end
 
     def deduce_css_paths src, dest, app_path
@@ -138,6 +164,8 @@ module NanDoc::Commands
         flags :css
         default :css
       end
+      @subset = flag
+      flag
     end
 
     def please_get_prototype_root_path app_path
@@ -152,6 +180,16 @@ module NanDoc::Commands
           result.error_message + " in " + config_path_for_app_path(app_path)
         )
       end
+    end
+
+    def process_diff_opts opts
+      task_abort "--backup cannot be used with diffing only patching.\n"<<
+      "usage: #{usage}\n#{invite_to_more_command_help}" if opts[:backup]
+      nil
+    end
+
+    def process_patch_opts opts
+      {:pass_thru => opts[:backup] ? {'--backup'=>''} : {}}
     end
   end
 end
