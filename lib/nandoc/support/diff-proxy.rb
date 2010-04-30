@@ -33,6 +33,50 @@ module NanDoc
       [tail_a, tail_b]
     end
     class Diff
+      class << self
+        def default_diff_stylesheet
+          @default_diff_stylesheet ||= {
+            :header => [:bold, :yellow],
+            :add    => [:bold, :green],
+            :remove => [:bold, :red],
+            :range  => [:bold, :magenta],
+            :trailing_whitespace => [:background, :red]
+          }
+        end
+        def stream_colorizer_prototype
+          @stream_colorizer_prototype ||= begin
+            require File.dirname(__FILE__)+'/stream-colorizer.rb'
+            NanDoc::StreamColorizer.new do |sc|
+              sc.stylesheet_merge(default_diff_stylesheet)
+              sc.when %r(\Adiff ), :state=>:header
+              sc.when(:header) do |o|
+                o.style :header
+                o.when %r(\A@@), :state=>:range
+              end
+              sc.when(:range) do |o|
+                o.style :range
+                o.when_not %r(\A@@), :state=>:plain
+              end
+              sc.when(:plain) do |o|
+                o.style nil
+                o.when %r(\Adiff ), :state=>:header
+                o.when %r(\A\+), :state=>:add
+                o.when %r(\A\-), :state=>:remove
+              end
+              sc.when(:add) do |o|
+                o.style :add
+                o.trailing_whitespace_style :trailing_whitespace
+                o.when_not %r(\A\+), :state=>:plain
+              end
+              sc.when(:remove) do |o|
+                o.style :remove
+                o.trailing_whitespace_style :trailing_whitespace
+                o.when_not %r(\A\-), :state=>:plain
+              end
+            end
+          end
+        end
+      end
       def initialize out, err, args
         @out = out
         @error = err
@@ -49,6 +93,13 @@ module NanDoc
       def ok?; ! error? end
       def to_s
         @out
+      end
+      def colorize out, opts={}
+        colorizer = self.class.stream_colorizer_prototype.spawn do |c|
+          c.stylesheet_merge(opts[:styles] || {})
+        end
+        colorizer.filter(to_s, out)
+        nil
       end
     end
     class Fail < RuntimeError;

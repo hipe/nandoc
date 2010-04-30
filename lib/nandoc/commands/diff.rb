@@ -96,9 +96,13 @@ module NanDoc::Commands
       if diff.error?
         task_abort diff.error
       end
-      $stderr.puts diff.command
-      $stderr.puts "-----(above is stderr, below is stdout)--------"
-      $stdout.puts diff.to_s
+      # $stderr.puts diff.command
+      # $stderr.puts "-----(above is stderr, below is stdout)--------"
+      if $stdout.tty? && NanDoc::Config.colorize?
+        diff.colorize($stdout, :styles => NanDoc::Config.diff_stylesheet)
+      else
+        $stdout.puts diff.to_s
+      end
     end
     def deduce_paths src, dest, subset, app_path
       case subset
