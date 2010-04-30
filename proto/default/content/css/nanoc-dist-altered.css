@@ -1,0 +1,95 @@
+* {
+  margin: 0;
+  padding: 0;
+  /* no fonts here */
+}
+
+body {
+  background: #fff;
+  /*
+    this was the nandoc-generated font-family:
+    font-family: Georgia, Palatino, Times, 'Times New Roman', sans-serif;
+    we moved this from the * class to here, then decided nah, stick with
+    default browser font to keep it simple and neutral-esque
+  */
+}
+
+a {
+  text-decoration: none;
+}
+
+.nandoc-topnav {
+  padding: 18px 0 18px 0;
+}
+
+a:link,
+a:visited {
+  color: #f30;
+}
+
+a:hover {
+  color: #f90;
+}
+
+#main {
+  position: absolute;
+  top: 40px;
+  left: 280px;
+  width: 500px;
+}
+
+#main h1 {
+  font-size: 40px;
+  font-weight: normal;
+  line-height: 40px;
+  letter-spacing: -1px;
+}
+
+#main p {
+  margin: 20px 0;
+  font-size: 15px;
+  line-height: 20px;
+}
+
+#main ul {
+  margin: 20px;
+}
+
+#main li {
+  list-style-type: square;
+  font-size: 15px;
+  line-height: 20px;
+}
+
+#sidebar {
+  position: absolute;
+  top: 40px;
+  left: 20px;
+  width: 200px;
+  padding: 20px 20px 0 0;
+  border-right: 1px solid #ccc;
+  text-align: right;
+}
+
+.nanoc-sidebar-h2 {
+  color: #333;
+  font-size: 13px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  line-height: 20px;
+  text-transform: uppercase;
+}
+
+#sidebar h2 {
+
+}
+
+#sidebar ul {
+  list-style-type: none;
+  margin: 20px 0;
+}
+
+#sidebar li {
+  font-size: 14px;
+  line-height: 20px;
+}
