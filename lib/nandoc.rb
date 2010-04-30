@@ -1,3 +1,6 @@
+require 'nanoc3'
+require 'nanoc3/cli'
+
 module NanDoc
   #
   # i make the D big so i can see it
