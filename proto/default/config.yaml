@@ -29,6 +29,8 @@ data_sources:
       source_file_basenames: ['README', 'NEWS']
       use_as_main_index: 'README.md'
 
+    site_prototype: default
+
     # The type is the identifier of the data source. By default, this will be
     # `filesystem_unified`.
     type: nandoc
