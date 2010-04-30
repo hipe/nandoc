@@ -11,7 +11,30 @@ module NanDoc
 
 
     #
-    # some FileUtils actions are wrapped with this proxy
+    # in the future make this smarter.  i don't like now nanoc handles color
+    # (a command line argument?) There should be an autodetect, and/or set
+    # last setting in sticky json file; or however it is it is done.
+    #
+    def colorize?
+      true
+    end
+
+    #
+    # everybody wants to look like git
+    #
+    def diff_stylesheet
+      @diff_stylesheet ||= {
+        :header => [:bold, :yellow],
+        :add    => [:bold, :green],
+        :remove => [:bold, :red],
+        :range  => [:bold, :magenta]
+      }
+    end
+
+    #
+    # some FileUtils actions are wrapped with this proxy to allow
+    # formatting and customizations from the typical FileUtils actions,
+    # to indent and colorize the notice stream sorta like nanoc does
     #
 
     def file_utils
