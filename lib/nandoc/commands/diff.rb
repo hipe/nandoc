@@ -1,83 +1,74 @@
-require File.expand_path('../../support/diff-proxy.rb', __FILE__)
+support =  File.expand_path('../../support', __FILE__)
+require support + '/diff-proxy.rb'
+require support + '/path-tardo.rb'
+require support + '/site-methods.rb'
+
 module NanDoc::Commands
-  module AppCommandHelpers
-    def deduce_app_path_or_fail args
-      if args.any?
-        deduce_app_path_from_args args
-      else
-        deduce_app_path_from_persistent_data
-      end
-    end
-  private
-    def deduce_app_path_from_args args
-      if File.exist?(args.first)
-        path = args.first
-        unless path == persistent_get('last_app_path')
-          persistent_set('last_app_path', path)
-        end
-        path
-      else
-        task_abort <<-D.gsub(/^  */,'')
-          site path not found: #{args.first.inspect}
-          usage: #{usage}
-          #{invite_to_more_command_help}
-        D
-      end
-    end
-    def deduce_app_path_from_persistent_data
-      if path = persistent_get('last_app_path')
-        if File.exist?(path)
-          path
-        else
-          persistent_set('last_app_path',false)
-          task_abort <<-D.gsub(/^  */,'')
-          previous site path is stale (#{path.inspect}) and no site provided
-          usage: #{usage}
-          #{invite_to_more_command_help}
-          D
-        end
-      else
-        task_abort(
-        'no site path provided and no site path in persistent data file '<<
-        "(#{NanDoc.dotfile_path})\n"<<
-        <<-D.gsub(/^ */,'')
-        usage: #{usage}
-        #{invite_to_more_command_help}
-        D
-        )
-      end
-    end
-  end
   class Diff < ::Cri::Command
-    NanDoc.persistent_delegate_to(self) # empty_tmpdir(), file_utils()
-    include NanDoc::CliCommandHelpers
-    include AppCommandHelpers
+    NanDoc.persistent_delegate_to(self) # persistent_set(), persistent_get()
+    include NanDoc::CliCommandHelpers, NanDoc::PathTardo, NanDoc::SiteMethods
 
     def name; 'diff' end
 
     def aliases; [ 'd' ] end
 
-    def short_desc; 'maybe push and pull' end
+    def short_desc; 'maybe push and pull some stuff (nanDoc hack)' end
 
     def long_desc
-      <<-D.gsub(/\n +/,' ')
-      (nanDoc hack) show diffs in css files, one day between any
-      two of the three spots.
-      D
+      <<-LONG_DESC.gsub(/\n +/,' ')
+      This eases the ridiculous pain of tweaking your generated css
+      and wanting to push it back to your <my-site> folder, and maybe
+      other things like that.
+      \n
+      Patch <my-site>/content with what's in <my-site>/output with
+      (--content-to-output|-c).  This is the default.
+      \n
+      Patch <prototypes>/<the-prototype> with what's in <my-site>/content
+      with (--content-to-prototype|-p).  This would be for altering the
+      nanDoc prototypes with what you have in your <my-site> folder.  This
+      would be for hacking nanDoc.
+      \n
+      Wierd bonus feature: Do the reverse of the above with -P or -C.
+      \n
+      This operates on a subset of the trees, for now only the files in the
+      'css/' folder. (you can use the --css option for this but there is no
+      reason to at the time of this writing.)
+      \n
+      (In the future it might support more options for patching
+      prototypes with entire <my-sites>)
+      \n
+      So, with this wierd chain, you can tweak your CSS, for example,
+      in the generated output and then push these changes all the way back to
+      the prototype with -cY and then -pY
+
+      Or you can undo your changes pulling all the way back from the prototype
+      with -PY and then -CY
+      LONG_DESC
     end
 
-    def usage; "nandoc diff [(-c|)] [-o|-p] [-a] [<path>]" end
+    def usage; "nandoc diff [-c|-C|-p|-P] [--css|] [-Y] [<path>]" end
 
     def option_definitions
       [
-        { :long => 'css', :short => 'c', :argument => :none,
-          :desc => 'show diffs in css files between things'
+        { :long => 'css',  :short => 's', :argument => :none,
+          :desc => ('subset: css -- ' <<
+          'show diffs in css files between things (default, only option)')
         },
-        { :long => 'output', :short => 'o', :argument => :none,
-          :desc => 'show diff from output to content (patch content)'
+        { :long => 'content-to-output', :short => 'c', :argument => :none,
+          :desc => 'show diff or patch content with output (default)'
         },
-        { :long => 'proto', :short => 'p', :argument => :none,
-          :desc => 'show diff from content to proto (patch proto)'
+        { :long => 'proto-to-content', :short => 'p', :argument => :none,
+          :desc => ("show diff or patch prototype with content\n"<<
+                    (' '*22)+"(this would be for patching/altering nandoc)")
+        },
+        { :long => 'output-to-content', :short => 'C', :argument => :none,
+          :desc => 'show diff or patch output with content (kind of weird)'
+        },
+        { :long => 'content-to-proto', :short => 'P', :argument => :none,
+          :desc => 'show diff or patch content with proto (sure why not)'
+        },
+        { :long => 'patch', :short => 'Y', :argument => :none,
+          :desc => 'apply the patch to the target (no undo!)'
         }
       ]
     end
@@ -89,65 +80,78 @@ module NanDoc::Commands
       subset = deduce_subset opts
       go_diff src, dest, subset, app_path
     end
+
   private
+
     def go_diff *a
       src_path, dest_path = deduce_paths(*a)
       diff = NanDoc::DiffProxy.diff(src_path, dest_path)
       if diff.error?
         task_abort diff.error
       end
-      # $stderr.puts diff.command
-      # $stderr.puts "-----(above is stderr, below is stdout)--------"
       if $stdout.tty? && NanDoc::Config.colorize?
         diff.colorize($stdout, :styles => NanDoc::Config.diff_stylesheet)
       else
         $stdout.puts diff.to_s
       end
     end
-    def deduce_paths src, dest, subset, app_path
-      case subset
-      when :css
-        src_path =
-          case src
-          when :output; app_path + '/output/css'
-          else fail("implement me: #{src}")
-          end
-        dest_path =
-          case dest
+
+    def deduce_css_paths src, dest, app_path
+      paths = [src, dest].map do |which|
+        case which
+          when :output;  app_path + '/output/css'
           when :content; app_path + '/content/css'
-          else fail("implement me: #{dest}")
-          end
-      else
-        fail("implement me: #{subset}")
+          when :proto;
+          please_get_prototype_root_path(app_path)+'/content/css'
+          else fail(
+            "implement me: get #{which.to_s} path from #{src.inspect}"
+          )
+        end
       end
-      assert_path "css source path", src_path
+      paths
+    end
+
+    def deduce_paths src, dest, subset, app_path
+      paths = case subset
+        when :css; deduce_css_paths src, dest, app_path
+        else; fail("unimplemented subset: #{subset}")
+      end
+      src_path, dest_path = paths
+      assert_path "css source path",      src_path
       assert_path "css destination path", dest_path
       [src_path, dest_path]
     end
+
     def deduce_src_and_dest app_path, opts
-      exclusive = [:output, :proto]
-      has = exclusive & opts.keys
-      src =
-      case has.size
-      when 0; :output
-      when 1; has.first == :proto ? :content : has.first
-      else
-        task_abort <<-D.gsub(/^  */,'')
-    #{exclusive.map{|x| "--#{x.to_s}"}.join(' and ')} are mutually exclusive.
-        usage: #{usage}
-        #{invite_to_more_command_help}
-        D
+      flag = exclusive_opt_flags(opts) do
+        flags :content_to_output, :content_to_proto,
+              :output_to_content, :proto_to_content
+        default '-c', :content_to_output
       end
-      dest =
-      case src
-      when :output; :content
-      when :content; :proto
-      else fail('oops')
-      end
+      /\A(.+)_to_(.+)\Z/ =~ flag.to_s or fail("no: #{flag}")
+      src, dest = $1.to_sym, $2.to_sym
       [src, dest]
     end
+
     def deduce_subset opts
-      opts[:css] ? :css : :css
+      flag = exclusive_opt_flags(opts) do
+        flags :css
+        default :css
+      end
+    end
+
+    def please_get_prototype_root_path app_path
+      config = parse_config_for_app_path app_path
+      result = path_tardo(config, 'data_sources/[0]/site_prototype')
+      if result.found?
+        thing_in_config = result.value
+        full_path = "proto/#{thing_in_config}"
+        full_path
+      else
+        task_abort(
+          result.error_message + " in " + config_path_for_app_path(app_path)
+        )
+      end
     end
   end
 end
