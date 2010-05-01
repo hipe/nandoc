@@ -113,7 +113,6 @@ module NanDoc
     class State
       include RuleList, Treebis::Colorize, NanDoc::SecretParent
       def initialize parent, name, &block
-        secret_parent_init
         self.parent = parent
         rule_list_init
         fail('no') unless Symbol === name

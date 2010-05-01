@@ -10,9 +10,23 @@
   <body>
     <div id="main">
       <div class="nandoc-topnav">
-        <span class='nanoc-sidebar-h2'>foobric doobric</span>
-        <span class='nanoc-sep'>&#10087;</span>
-        <span class='nanoc-sidebar-h2'>cheebix jeebis</span>
+        <%=
+          'topnav coming up next' or nandoc_topnav do |sm|
+            sm.binding = binding
+            sm.item { |i| <<-H
+              <span class='nanoc-sidebar-h2'>#{i.nandoc_title}</span>
+            H
+            }
+            sm.current_item { |i| <<-H
+              <span class='nanoc-sidebar-h2'>#{i.nandoc_title}</span>
+            H
+            }
+            sm.separator { <<-H
+              <span class='nanoc-sep'>&#10087;</span>
+            H
+            }
+          end
+        %>
       </div>
       <%= yield %>
     </div>
@@ -20,27 +34,25 @@
       <h2 class='nanoc-sidebar-h2'>Documentation</h2>
       <div id='site-map'>
         <%=
-        home_page = @items.find { |i| i.identifier == '/' }
-        nandoc_sitemap([home_page], :tabs=>4, :glyphs => :right) do |it|
-          it.children_are do |node|
-            node.children.select{|c| c.nandoc_visible? }.sort_by(&:nandoc_title)
-          end        
-          it.render_parent do |m|<<-HTML
+        nandoc_sitemap(binding) do |it|
+          it.glyphs, it.root_identifier, it.tabs = :right, '/', 4
+          it.children &Nanoc3::Item.sorted_visible_children
+          it.render_parent do |m|<<-H
             <ul class='nested'>
-              #{m.render_children({:tabs=>7})}
+              #{m.render_children(:tabs=>7)}
             </ul>
-          HTML
+          H
           end
-          it.render_child do |m, node| <<-HTML
-            <li class='lvl#{m.level}'>
-              #{link_to_unless_current(node.nandoc_title, node.path)}
-              #{m.glyphs_right}
-              #{m.render_parent}
+          it.render_child do |map|
+            <<-H
+            <li class='lvl#{map.level}'>
+              #{link_to_unless_current(map.item.nandoc_title, map.item.path)}
+              #{map.glyphs_right}
+              #{map.render_parent}
             </li>
-          HTML
+          H
           end
         end
-      # nandoc_sitemap(home_page, :tabs => 4, :glyphs => :right )
       %>
       </div><% if false %>
       <h2 class='nanoc-sidebar-h2'>Documentation</h2>
