@@ -1,25 +1,25 @@
 module NanDoc
   module SiteMethods
 
-    def deduce_app_path_or_fail args
+    def deduce_site_path_or_fail args
       if args.any?
-        deduce_app_path_from_args args
+        deduce_site_path_from_args args
       else
-        deduce_app_path_from_persistent_data
+        deduce_site_path_from_persistent_data
       end
     end
 
   private
 
-    def config_path_for_app_path path
+    def config_path_for_site_path path
       path + '/config.yaml'
     end
 
-    def deduce_app_path_from_args args
+    def deduce_site_path_from_args args
       if File.exist?(args.first)
         path = args.first
-        unless path == persistent_get('last_app_path')
-          persistent_set('last_app_path', path)
+        unless path == persistent_get('last_site_path')
+          persistent_set('last_site_path', path)
         end
         path
       else
@@ -31,12 +31,12 @@ module NanDoc
       end
     end
 
-    def deduce_app_path_from_persistent_data
-      if path = persistent_get('last_app_path')
+    def deduce_site_path_from_persistent_data
+      if path = persistent_get('last_site_path')
         if File.exist?(path)
           path
         else
-          persistent_set('last_app_path',false)
+          persistent_set('last_site_path',false)
           task_abort <<-D.gsub(/^  */,'')
           previous site path is stale (#{path.inspect}) and no site provided
           usage: #{usage}
@@ -59,8 +59,8 @@ module NanDoc
     # you just get the raw file data tree, it's not merged in with any
     # DEFAULT_CONFIG stuff or anything
     #
-    def parse_config_for_app_path path
-      config_path = config_path_for_app_path( path )
+    def parse_config_for_site_path path
+      config_path = config_path_for_site_path( path )
       task_abort("config file for app not found: #{config_path}") unless
         File.exist?(config_path)
       YAML.load_file config_path
