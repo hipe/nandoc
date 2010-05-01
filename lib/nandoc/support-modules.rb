@@ -115,10 +115,10 @@ module NanDoc
           end
         elsif(@default)
           found = @default
-          opts[@name] = found
         else
           found = nil
         end
+        opts[@name] = found if found # normalize short versions
         found
       end
       def values *v
