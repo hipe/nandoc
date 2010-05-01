@@ -11,7 +11,7 @@
     <div id="main">
       <div class="nandoc-topnav">
         <%=
-          'topnav coming up next' or nandoc_topnav do |sm|
+          nandoc_topnav do |sm|
             sm.binding = binding
             sm.item { |i| <<-H
               <span class='nanoc-sidebar-h2'>#{i.nandoc_title}</span>
