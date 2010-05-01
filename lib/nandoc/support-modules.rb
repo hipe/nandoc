@@ -11,6 +11,7 @@ module NanDoc
       File.basename($PROGRAM_NAME)
     end
   end
+  module StringFormatting; end
   module OptsNormalizer
     def normalize_opts opts
       opts = opts.dup
@@ -87,6 +88,62 @@ module NanDoc
         these.first
       end
     end
+    class OptEnum
+      include OptsNormalizer, StringFormatting
+      def initialize(&block)
+        instance_eval(&block)
+      end
+      def command cmd
+        @command = cmd
+      end
+      def default str
+        @default = str
+      end
+      def name name
+        @name = name
+      end
+      def parse opts
+        found = nil
+        if opts.key?(@name)
+          v = opts[@name]
+          re = /\A#{Regexp.escape(v)}/
+          founds = @values.grep(re)
+          case founds.size
+            when 0; invalid(v)
+            when 1; found = founds.first
+            else found = founds.detect{|f| f==v} or too_many(founds)
+          end
+        elsif(@default)
+          found = @default
+          opts[@name] = found
+        else
+          found = nil
+        end
+        found
+      end
+      def values *v
+        v = v.first if v.size==1 && Array === v
+        @values = v
+      end
+    private
+      def coda
+        "usage: #{@command.usage}\n#{@command.invite_to_more_command_help}"
+      end
+      def invalid val
+        @command.task_abort("invalid value #{val.inspect} for "<<
+          "#{long_name}. #{valid_values_are}\n#{coda}")
+      end
+      def long_name
+        unnormalize_opt_key(@name)
+      end
+      def too_many these
+        @command.task_abort("did you mean " <<
+          oxford_comma(these,' or ', &quoted)<<" for #{long_name}?\n#{coda}")
+      end
+      def valid_values_are
+        "valid values are " << oxford_comma(@values,&quoted)
+      end
+    end
   end
   module PathHelper
     def assert_path name, *paths
@@ -109,6 +166,17 @@ module NanDoc
     end
     def no_leading_ws str
       str.gsub(/\A[[:space:]]+/, '')
+    end
+    def oxford_comma items, final = ' and ', &quoter
+      items = items.map(&quoter) if quoter
+      these = []
+      these.push final if items.size > 1
+      these.concat(Array.new(items.size-2,', ')) if items.size > 2
+      these.reverse!
+      items.zip(these).flatten.compact.join
+    end
+    def quoted
+      proc{|x| "\"#{x}\"" }
     end
     def unindent str, by
       str.gsub(/^#{Regexp.escape(by)}/, '')
