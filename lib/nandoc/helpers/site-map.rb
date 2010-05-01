@@ -133,7 +133,7 @@ module NanDoc::Helpers::NanDocHelpers
     # Go in two passes (you don't have to), first past set things up
     #
     def render_children child_opts
-      cxo = @opts.merge(:level=>@level+1).merge(child_opts)
+      cxo = @opts.merge(:level=>@level+1, :tab=>tab, :tabs=> tabs).merge(child_opts)
       fail('no') unless cxo[:tab] && cxo[:tabs]
       last_idx = @children.size - 1
       ch_objs = @children.each.with_index.map do |ch, idx|
