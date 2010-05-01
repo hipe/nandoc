@@ -2,6 +2,16 @@ class Nanoc3::Item
   #
   # Little hacks we may or may not use for stuff like sitemap generation.
   #
+  class << self
+    def sorted_visible_children
+      @svc ||= begin
+        proc do |node|
+          node.children.select{|c| c.nandoc_visible? }.sort_by(&:nandoc_title)
+        end
+      end
+    end
+  end
+
 
   include NanDoc::StringFormatting # basename_no_extension()
 
