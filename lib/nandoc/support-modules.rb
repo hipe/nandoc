@@ -178,8 +178,70 @@ module NanDoc
     def quoted
       proc{|x| "\"#{x}\"" }
     end
+
+    #
+    # must respond to tab() and tabs()
+    # reindent a block by striping leading whitespace from lines evenly
+    # and then re-indenting each line according to our indent.
+    # this could be simpler, it has been more complicated
+    # we do it languidly because we can
+    #
+    def reindent h1, offset=0
+      indent_by = tab * (tabs+offset)
+      unindent_by = (/\A([[:space:]]+)/ =~ h1 && $1) or fail('re fail')
+      h2 = no_blank_lines(h1) # careful. will mess up with <pre> etc
+      return h2 if unindent_by == indent_by
+      h3 = unindent(h2, unindent_by)
+      h4 = indent(h3, indent_by)
+      h4
+    end
+
     def unindent str, by
       str.gsub(/^#{Regexp.escape(by)}/, '')
+    end
+  end
+  module SecretParent
+    #
+    # set parent attribute without it showing up in inspect() dumps
+    #
+    def parent= mixed
+      fail("no clear_parent() available yet.") unless mixed
+      @has_parent = !! mixed
+      class << self; self end.send(:define_method, :parent){mixed}
+      mixed # maybe chain assignmnet of 1 parent to several cx at once
+    end
+    def parent?
+      instance_variable_defined?('@has_parent') && @has_parent # no warnings
+    end
+    def parent
+      nil
+    end
+  end
+  module SharedAttrReader
+    #
+    # this is a specialized form of delegator pattern: let one object
+    # use the responses from another object for a set of accessors
+    #
+    def shared_attr_reader *list
+      fail('no inehiritance yet') if method_defined?(:shared=)
+      sm = Module.new
+      name = self.to_s+'::SharedAttrReaders'
+      sing = class << sm; self end
+      sing.send(:define_method, :name){name}
+      sing.send(:alias_method, :inspect, :name)
+      list.each do |attrib|
+        sm.send(:define_method, attrib){ shared.send(attrib) }
+      end
+      fail('no') if method_defined?(:shared)
+      define_method(:shared){ self }
+      define_method(:shared=) do |source|
+        sing = class << self; self end
+        sing.send(:define_method, :shared){ source }
+        sing.send(:include, sm) # wow cool that this works w/o having
+                                # to Module#undef_method
+        source
+      end
+      nil
     end
   end
   module TaskCommon

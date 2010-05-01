@@ -110,25 +110,8 @@ module NanDoc
         ! super
       end
     end
-    module SecretParent
-      def secret_parent_init
-        @has_parent = false
-      end
-      def parent= mixed
-        fail("no") unless mixed # not for sure
-        @has_parent = true
-        class << self; self end.send(:define_method, :parent){mixed}
-        mixed
-      end
-      def parent?
-        @has_parent
-      end
-      def parent
-        nil
-      end
-    end
     class State
-      include RuleList, Treebis::Colorize, SecretParent
+      include RuleList, Treebis::Colorize, NanDoc::SecretParent
       def initialize parent, name, &block
         secret_parent_init
         self.parent = parent
