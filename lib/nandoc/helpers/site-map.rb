@@ -42,7 +42,7 @@ module NanDoc::Helpers::NanDocHelpers
       :render_parent_proc # children will access root nodes's attrs for these
 
     def init_root binding, &block
-      instance_eval(&block)
+      block.call(self)
       @is_first = @is_last = true
       @level = 0
       @item = nil
