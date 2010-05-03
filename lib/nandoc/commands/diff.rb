@@ -39,7 +39,7 @@ module NanDoc::Commands
     end
 
     def usage;
-      'nandoc diff [-c|-C|-p|-P] [-s (css|layouts)] [-Y [-b]] [<path>]'
+      'nandoc diff [-c|-C|-p|-P] [-s (css|layouts|js)] [-Y [-b]] [<path>]'
     end
 
     def option_definitions
@@ -67,7 +67,7 @@ module NanDoc::Commands
                     (' '*22)+"(this would be for patching/altering nandoc)")
         },
         { :long => 'subset', :short => 's', :argument => :required,
-          :desc => "'css' or 'layouts' (default: css)"
+          :desc => "'css' or 'layouts' or 'js' (default: css)"
         }
       ]
     end
@@ -99,6 +99,7 @@ module NanDoc::Commands
 
     def go_diff(*a)
       diff = get_diff_object(*a)
+      $stderr.puts diff.command
       if $stdout.tty? && NanDoc::Config.colorize?
         diff.colorize($stdout, :styles => NanDoc::Config.diff_stylesheet)
       else
@@ -125,12 +126,12 @@ module NanDoc::Commands
       end.on('.').run
     end
 
-    def deduce_css_paths src, dest, site_path
+    def deduce_subfolder_paths sub, src, dest, site_path
       paths = [src, dest].map do |which|
         case which
-          when :output;  site_path + '/output/css'
-          when :content; site_path + '/content/css'
-          when :proto;   proto_path(site_path)+'/content/css'
+          when :output;  "#{site_path}/output/#{sub}"
+          when :content; "#{site_path}/content/#{sub}"
+          when :proto;   proto_path(site_path)+'/content/'+sub
           else fail(
             "implement me: get #{which.to_s} path from #{src.inspect}")
         end
@@ -158,8 +159,9 @@ module NanDoc::Commands
 
     def deduce_paths src, dest, subset, site_path
       paths = case subset
-        when 'css'; deduce_css_paths src, dest, site_path
+        when 'css';     deduce_subfolder_paths 'css', src, dest, site_path
         when 'layouts'; deduce_layout_paths src, dest, site_path
+        when 'js';      deduce_subfolder_paths 'js', src, dest, site_path
         else; fail("unimplemented subset: #{subset}")
       end
       src_path, dest_path = paths
@@ -184,7 +186,7 @@ module NanDoc::Commands
       @subsets ||= OptEnum.new do |oe|
         command cmd
         name :subset
-        values %w(css layouts)
+        values %w(css layouts js)
         default 'css'
       end
     end
