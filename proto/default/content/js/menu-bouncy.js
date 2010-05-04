@@ -7,110 +7,120 @@ $(document).ready(function(){
   http://www.learningjquery.com/2009/01/quick-tip-prevent-animation-queue-buildup/
 
   @todo maybe make it a jquery poogin
+
+  issues: if the mouse moves sufficiently fast, there is no mouseout event so
+  the menu stays open until etc.
   */
 
   $("a").click(function(){   //Remove outline from links
     $(this).blur();
   });
 
-  var puts = console.log ? console.log : function(){};
+  // var puts = (window.console && console.log) ? console.log : function(){};
+  var puts = function(){};
 
-  var shortHeight = '0px' // weird
-
-  var setupMouseoverMenu = null;
-
-  var setupMouseover = function(hotspot, menu){
-    var bgcolor = menu.css('background-color')
-    var height = menu.height();
-    var useHeight = height+'px'
-    menu.css('background','none');
-    menu.height(shortHeight);
-    menu.data('inMenu', false);
-    menu.data('showing', false);
-    setupMouseoverHotspot(hotspot, menu, bgcolor, useHeight);
-    setupMouseoverMenu(menu);
+  var menus = [];
+  var registerMenu = function(menu){
+    menu.data('identifier', menus.length);
+    menus.push(menu);
   };
 
-  setupMouseoverMenu = function(menu){
-    menu.mouseover(function(){
-      if (menu.data('showing')){
-        puts("> menu mouseover - showing:true so inMenu:true.");
-        menu.data('inMenu', true);
-      } else {
-        puts("> menu mouseover - showing:false so stay.");
+  var findHotspotFromSepDiv = function(sepDiv){
+    var a = sepDiv.prev().find('a');
+    if (a.length) return a;
+    return sepDiv; // this is for items on level1 that have children and that
+                   // we are at currently. (such items aren't hrefs, just text.)
+  }
+
+  var hideAnyShowing = function(){
+    for (var i=menus.length; i--;) {
+      var menu = menus[i];
+      if (menu.data('showing')) {
+        menu.data('hideMenu')(); // eew
       }
-    });
-  };
-
-  var setupMouseoverHotspot = function(hotspot, menu, bgcolor, useHeight) {
-    hotspot.mouseover(function(){
-      if (menu.data('showing')){
-        puts('> hs mouseover - showing:true so stay.');
-      } else {
-        puts('> hs mouseover - showing:false so showing:true with actions.');
-        menu.data('showing', true);
-        menu.css({
-          'background-color' : bgcolor,
-          'opacity'          : 1
-        });
-        menu.stop().animate(
-          { height : useHeight },
-          { queue:false, duration:600, easing: 'easeOutBounce' }
-        );
-      }
-    });
-  };
-
-  var closeMenuFunction = function(menu) {
-    return function(){
-      if (! menu.data('showing')){
-        puts("> close() - showing:false so stay");
-      } else {
-        puts("> close() - showing:true so (showing:false, inMenu:false) with actions.");
-        menu.data('showing', false);
-        menu.data('inMenu', false);
-        menu.stop().animate(
-          { height:shortHeight },
-          { queue:false,
-            duration:600,
-            easing: 'easeOutBounce'
-          }
-        );
-        menu.animate(
-          { opacity:0 },
-          { queue: false, duration: 600 }
-        )
-      };
     }
   };
 
-  var setupMouseout = function(hotspot, menu){
-    close = closeMenuFunction(menu);
-    hotspot.mouseout(function(){
-      // hack: give a few beats to wait and see whether we drag
-      // the mouse into the dropdown menu or off of the hotspot, off of the menu
+  var setupHotspotAndMenu = function(hotspot, menu){
+    registerMenu(menu);
+    var shortHeight, tallHeight, easing, duration;
+    shortHeight = '0px';
+    tallHeight = menu.height() + 'px';
+    easing = 'easeOutBounce';
+    duration = 600;
+    menu.height(shortHeight);
+    menu.hide();
+    var hide = function(){ menu.hide(); };
+    var showMenu = function(){
+      hideAnyShowing();
+      menu.data('showing', true);
+      menu.show();
+      menu.css({opacity: 1});
+      menu.stop().animate(
+        { height : tallHeight },
+        { queue:false, duration:duration, easing:easing }
+      );
+    };
+    var hideMenu = function(){
+      menu.data('showing', false);
+      menu.data('inMenu', false);
+      menu.stop().animate(
+        { height : shortHeight },
+        { queue:false, duration:duration, easing:easing, complete:hide }
+      );
+      menu.animate(
+        { opacity: 0 },
+        { duration: duration }
+      );
+    };
+    menu.data('hideMenu',hideMenu); // eew
+
+    var hotspotMouseover = function(){
+      if (menu.data('showing')){
+        puts("hs mouseover - showing so nothing.");
+      } else {
+        puts("hs mouseover - not showing so show.");
+        showMenu();
+      }
+    };
+    var hotspotMouseout = function(){
+      // hack - we need to wait a few beats to see if the mouse goes
+      // into the menu or not.
       setTimeout(function(){
         if (menu.data('inMenu')) {
-          puts("> hotspot mouseout - inMenu:true so stay.");
+          puts("hotspot mouseout - in menu so stay.");
         } else {
-          puts("> hotspot mouseout - inMenu:false so close.");
-          close();
+          puts("hotspot mouseout - not in menu so hide.");
+          hideMenu();
         }
-      }, 1000);
-    });
-    menu.mouseout(function(){
-      puts("> menu mouseout - close() definately.")
-      close();
-    });
+      },600);
+    };
+    var menuMouseover = function(e, e2){
+      if (!e) { e = e2; }
+      // this hits a lot b/c of all the elements in menu.  we take them all
+      menu.data('inMenu', true);
+    };
+    var menuMouseout = function(e, e2){
+      if (!e) { e = e2; }
+      if (e.target != menu[0]){
+        // puts("menu mouseout - ignoring b/c menu was not target."); too noisy
+      } else {
+        puts("menu mouseout - always hides menu when menu was target.");
+        hideMenu();
+      }
+    };
+    hotspot.mouseover(hotspotMouseover);
+    hotspot.mouseout(hotspotMouseout);
+    menu.mouseover(menuMouseover);
+    menu.mouseout(menuMouseout);
   };
 
   els = $('.bouncy-lvl2-menu');
   for (var i=els.length; i--;) {
     var menu = $(els[i]);
     var sepDiv = menu.parent();
-    var hotspot = sepDiv.prev().find('a');
-    setupMouseover(hotspot, menu);
-    setupMouseout(hotspot, menu);
+    var hotspot = findHotspotFromSepDiv(sepDiv);
+    setupHotspotAndMenu(hotspot, menu);
   }
 
 });
