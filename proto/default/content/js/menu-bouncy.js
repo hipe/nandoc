@@ -1,20 +1,20 @@
 $(document).ready(function(){
   /*
   This is adapted from Sam & Zach -
-  http://buildinternet.com/2009/01/how-to-make-a-smooth-animated-menu-with-jquery/  
-  
+  http://buildinternet.com/2009/01/how-to-make-a-smooth-animated-menu-with-jquery/
+
   The use of stop() below is per -
   http://www.learningjquery.com/2009/01/quick-tip-prevent-animation-queue-buildup/
-  
+
   @todo maybe make it a jquery poogin
   */
-  
+
   $("a").click(function(){   //Remove outline from links
     $(this).blur();
   });
-  
+
   var puts = console.log ? console.log : function(){};
-  
+
   var shortHeight = '0px' // weird
 
   var setupMouseoverMenu = null;
@@ -29,7 +29,7 @@ $(document).ready(function(){
     menu.data('showing', false);
     setupMouseoverHotspot(hotspot, menu, bgcolor, useHeight);
     setupMouseoverMenu(menu);
-  };  
+  };
 
   setupMouseoverMenu = function(menu){
     menu.mouseover(function(){
@@ -103,14 +103,14 @@ $(document).ready(function(){
       close();
     });
   };
-  
+
   els = $('.bouncy-lvl2-menu');
   for (var i=els.length; i--;) {
     var menu = $(els[i]);
     var sepDiv = menu.parent();
-    var hotspot = sepDiv.prev().find('a');  
+    var hotspot = sepDiv.prev().find('a');
     setupMouseover(hotspot, menu);
     setupMouseout(hotspot, menu);
   }
-  
+
 });
