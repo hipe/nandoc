@@ -165,7 +165,10 @@ module NanDoc
       str.gsub(/\n[[:space:]]*\n/, "\n")
     end
     def no_leading_ws str
-      str.gsub(/\A[[:space:]]+/, '')
+      str.sub(/\A[[:space:]]+/, '')
+    end
+    def no_trailing_ws str
+      str.sub(/[[:space:]]+\Z/, '')
     end
     def oxford_comma items, final = ' and ', &quoter
       items = items.map(&quoter) if quoter
@@ -188,7 +191,8 @@ module NanDoc
     #
     def reindent h1, offset=0
       indent_by = tab * (tabs+offset)
-      unindent_by = (/\A([[:space:]]+)/ =~ h1 && $1) or fail('re fail')
+      unindent_by = (/\A([[:space:]]+)/ =~ h1 && $1) or
+        fail('regex fail -- not sure if we need this to be so strict')
       h2 = no_blank_lines(h1) # careful. will mess up with <pre> etc
       return h2 if unindent_by == indent_by
       h3 = unindent(h2, unindent_by)
