@@ -1,7 +1,5 @@
 #!/usr/bin/env ruby
 
-# A few helpful tips about the Rules file:
-#
 # * The order of rules is important: for each item, only the first matching
 #   rule is applied.
 #
@@ -10,11 +8,15 @@
 #   item, use the pattern "/about/*/"; "/about/*" will also select the parent,
 #   because "*" matches zero or more characters.
 
-compile '/css/*/' do
-  # don't filter or layout
+PassThru = [
+  {:dir=>'css', :ext=>'css'},
+  {:dir=>'js',  :ext=>'js'},
+  {:dir=>'vendor', :ext=>'js'}
+]
+PassThru.each do |x|
+  compile("/#{x[:dir]}/*/"){ } # don't filter or layout
 end
 
-# for NanDoc: begin hack
 nandoc_ds = @site.config[:data_sources].first
 fail("nandoc hack failed!") unless nandoc_ds[:type] == 'nandoc'
 
@@ -27,7 +29,7 @@ nandoc_ds[:config][:source_file_basenames].each do |name|
   end
 end
 
-# if we are using e.g. README.md for main index. hack alert!
+# if we are using e.g. README.md for main index
 if nandoc_ds[:config][:use_as_main_index].to_s =~ /\.md\Z/
   compile '/' do
     filter :erb
@@ -36,16 +38,17 @@ if nandoc_ds[:config][:use_as_main_index].to_s =~ /\.md\Z/
   end
 end
 
-route '/css/*' do
-  if item.children.empty?
-    item.identifier =~ /^(.+)\/$/
-    "#{$1}.css"
-  else
-    fail("don't know what to do with folders in css/: #{item.identifier}")
+PassThru.each do |x|
+  dir, ext = x[:dir], x[:ext]
+  route "/#{dir}/*" do
+    if item.children.empty?
+      # only operate on leaf nodes
+      basename = item.identifier =~ /^(.+)\/$/ && $1 or
+        fail("parse fail: #{item.identifier}")
+      "#{basename}.#{ext}"
+    end
   end
 end
-
-# end NanDoc hacks
 
 compile '*' do
   filter :erb

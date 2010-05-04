@@ -26,6 +26,7 @@ enable_output_diff: false
 data_sources:
   -
     config:
+      allow_periods_in_identifiers: true
       source_file_basenames: ['README', 'NEWS']
       use_as_main_index: 'README.md'
 

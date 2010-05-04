@@ -5,34 +5,32 @@
     <title>A Brand New nanoc Site - <%= @item[:title] %></title>
     <link rel="stylesheet" type="text/css" href="/css/nanoc-dist-altered.css" media="screen">
     <link rel="stylesheet" type="text/css" href="/css/trollop-subset.css" media="screen">
+    <script type="text/javascript" src="/vendor/jquery-1.3.js"></script>
+    <script type="text/javascript" src="/vendor/jquery.easing.1.3.js"></script>
+    <script type="text/javascript" src="/js/menu-bouncy.js"></script>
     <meta name="generator" content="nanoc 3.1.2">
   </head>
   <body>
     <div id="main">
       <div class="nandoc-topnav">
         <%=
-          nandoc_topnav do |sm|
-            sm.binding = binding
-            sm.item { |i| <<-H
-              <span class='nanoc-sidebar-h2'>#{i.nandoc_title}</span>
-            H
-            }
-            sm.current_item { |i| <<-H
-              <span class='nanoc-sidebar-h2'>#{i.nandoc_title}</span>
-            H
-            }
-            sm.separator { <<-H
-              <span class='nanoc-sep'>&#10087;</span>
-            H
-            }
+          These = {
+            '❦' => '&#10086;',
+            '❧' => '&#10087;',
+            '♠' => '&spades;'
+          } unless self.class.const_defined?('These') # hm
+          nandoc_menu_bouncy(binding) do |it|
+            it.separator = These['❧']
+            it.tabs = 4
           end
         %>
+        <div class='clear'></div>
       </div>
       <%= yield %>
     </div>
     <div id="sidebar">
       <h2 class='nanoc-sidebar-h2'>Documentation</h2>
-      <div id='site-map'>
+      <div id='nandoc-site-map'>
         <%=
         nandoc_sitemap(binding) do |it|
           it.glyphs, it.root_identifier, it.tabs = :right, '/', 4

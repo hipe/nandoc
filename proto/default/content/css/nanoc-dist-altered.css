@@ -1,25 +1,20 @@
 * {
   margin: 0;
   padding: 0;
-  /* no fonts here */
+  /*
+    this was the nandoc-generated font-family:
+    font-family: Georgia, Palatino, Times, 'Times New Roman', sans-serif;
+    this was breaking the default browser's font for <code></code>,
+    decided just to go with the browser default font
+  */
 }
 
 body {
   background: #fff;
-  /*
-    this was the nandoc-generated font-family:
-    font-family: Georgia, Palatino, Times, 'Times New Roman', sans-serif;
-    we moved this from the * class to here, then decided nah, stick with
-    default browser font to keep it simple and neutral-esque
-  */
 }
 
 a {
   text-decoration: none;
-}
-
-.nandoc-topnav {
-  padding: 18px 0 18px 0;
 }
 
 a:link,
@@ -45,21 +40,23 @@ a:hover {
   letter-spacing: -1px;
 }
 
-#main p {
+.maincontent p {
   margin: 20px 0;
   font-size: 15px;
   line-height: 20px;
 }
 
+/*
 #main ul {
   margin: 20px;
-}
-
+}*/
+/*
 #main li {
   list-style-type: square;
   font-size: 15px;
   line-height: 20px;
 }
+*/
 
 #sidebar {
   position: absolute;
@@ -71,21 +68,8 @@ a:hover {
   text-align: right;
 }
 
-#site-map {
-  margin: 10px 12px 10px 0px
-}
-
-.nanoc-sidebar-h2 {
-  color: #333;
-  font-size: 13px;
-  font-weight: bold;
-  letter-spacing: 1px;
-  line-height: 20px;
-  text-transform: uppercase;
-}
-
 #sidebar h2 {
-
+  /* moved to a class to make it more reusable */
 }
 
 #sidebar ul {
@@ -96,4 +80,84 @@ a:hover {
 #sidebar li {
   font-size: 14px;
   line-height: 20px;
+}
+
+/*
+############################################################################
+nandoc added.
+alphabetical order disregarding element type, any leading nandoc- prefix
+or whether it is an identifier or a class.
+) */
+.bouncy-lvl1-sep {
+float:left;
+padding: 0 0.2em;
+position: relative;
+z-index: 1;
+}
+.bouncy-lvl2-menu {
+background: #ccc;
+padding: 0em 0.2em 0.2em 0.5em;
+overflow: hidden;
+position: absolute;
+right: 0px;
+text-align: right;
+top: 1em;
+z-index: -1;
+-moz-border-radius-bottomleft: 8px;
+-moz-border-radius-bottomright: 8px;
+-moz-border-radius-topleft: 8px;
+-moz-border-radius-topright: 0px;
+-webkit-border-bottom-left-radius: 8px;
+-webkit-border-bottom-right-radius: 8px;
+-webkit-border-top-left-radius: 8px;
+-webkit-border-top-right-radius: 0px;
+}
+.bouncy-lvl2-item {
+white-space: nowrap;
+}
+.bouncy-lvl2-content a:link {
+color: #333;
+}
+.bouncy-lvl2-content a:visited {
+color: #000;
+}
+.bouncy-lvl2-content a:hover {
+color: #f30;
+}
+.bouncy-lvl2-sep {
+
+}
+.clear {
+clear: both;
+}
+.debugging-outline {
+border: 1px solid orange;
+}
+.nandoc-menu-lvl-1{
+float: left;
+position: relative;
+z-index: 2;
+}
+.nandoc-menu-sep {
+float: left;
+margin: 0 0.2em;
+z-index; 1;
+}
+.nanoc-sidebar-h2 {
+color: #333;
+font-size: 13px;
+font-weight: bold;
+letter-spacing: 1px;
+line-height: 20px;
+text-transform: uppercase;
+}
+#nandoc-site-map {
+margin: 10px 12px 10px 0px
+}
+.nandoc-topnav {
+padding: 18px 0 18px 0;
+}
+.nandoc-topnav-2 {
+padding: 18px 0 18px 0;
+border: 1px solid black;
 }
