@@ -39,7 +39,7 @@ module NanDoc::Commands
     end
 
     def usage;
-      'nandoc diff [-c|-C|-p|-P] [-s (css|layouts|js)] [-Y [-b]] [<path>]'
+    'nandoc diff [-c|-C|-p|-P] [-s (css|layouts|js|root)] [-Y [-b]] [<path>]'
     end
 
     def option_definitions
@@ -88,9 +88,97 @@ module NanDoc::Commands
 
   private
 
+    def deduce_root_paths src, dest, site_path
+      @diff_method = :diff_root_subset
+      path_src = deduce_subfolder_path site_path, src
+      path_dst = deduce_subfolder_path site_path, dest
+      if path_src == path_dst
+        task_abort("source and destination paths are the same. "<<
+        "did you forget -p or -P ?\nusage: #{usage}\n"<<
+        invite_to_more_command_help)
+      end
+      [path_src, path_dst]
+    end
+
+    def deduce_subfolder_path site_path, which, sub=nil
+      tox =
+      case which
+        when :output;  [site_path, sub ? 'output' : nil, sub]
+        when :content; [site_path, sub ? 'content': nil, sub]
+        when :proto;   [proto_path(site_path), sub ? 'content' : nil, sub]
+        else fail(
+          "implement me: get #{which.to_s} subpath")
+      end
+      File.join(tox.compact)
+    end
+
+    def deduce_subfolder_paths sub, src, dest, site_path
+      paths = [src, dest].map do |which|
+        deduce_subfolder_path site_path, which, sub
+      end
+      paths
+    end
+
+    def deduce_layout_paths src, dest, site_path
+      if [src, dest].index(:output)
+        task_abort "Sorry, it doesn't make sense to look at layout " <<
+        "in output directory because there is none.\n" <<
+        "Please use -P or -p to compare layout btwn proto and <my-site>.\n"<<
+        "usage: #{usage}\n#{invite_to_more_command_help}"
+      end
+      paths = [src, dest].map do |which|
+        case which
+          when :content; site_path + '/layouts'
+          when :proto;   proto_path(site_path)+'/layouts'
+          else fail(
+            "implement me: get #{which.to_s} path from #{src.inspect}")
+        end
+      end
+      paths
+    end
+
+    def deduce_paths src, dest, subset, site_path
+      paths = case subset
+        when 'css';     deduce_subfolder_paths 'css', src, dest, site_path
+        when 'layouts'; deduce_layout_paths src, dest, site_path
+        when 'js';      deduce_subfolder_paths 'js', src, dest, site_path
+        when 'root';    deduce_root_paths src, dest, site_path
+        else; fail("unimplemented subset: #{subset}")
+      end
+      src_path, dest_path = paths
+      assert_path "source path",      src_path
+      assert_path "destination path", dest_path
+      [src_path, dest_path]
+    end
+
+    def deduce_src_and_dest site_path, opts
+      flag = exclusive_opt_flags(opts) do
+        flags :content_to_output, :content_to_proto,
+              :output_to_content, :proto_to_content
+        default '-c', :content_to_output
+      end
+      /\A(.+)_to_(.+)\Z/ =~ flag.to_s or fail("no: #{flag}")
+      src, dest = $1.to_sym, $2.to_sym
+      [src, dest]
+    end
+
+    def diff_normal src_path, dest_path
+      NanDoc::DiffProxy.diff(src_path, dest_path)
+    end
+
+    def diff_root_subset src, dest
+      require File.expand_path('../../support/site-diff.rb', __FILE__)
+      thing = NanDoc::SiteDiff.new(src, dest)
+      thing.get_diff_object
+    end
+
     def get_diff_object(*a)
+      @diff_method = :diff_normal
       src_path, dest_path = deduce_paths(*a)
-      diff = NanDoc::DiffProxy.diff(src_path, dest_path)
+      diff = case @diff_method # no send() b/c trace stacks look dumb
+        when :diff_normal;      diff_normal(src_path, dest_path)
+        when :diff_root_subset; diff_root_subset(src_path, dest_path)
+      end
       if diff.error?
         task_abort diff.error
       end
@@ -126,67 +214,12 @@ module NanDoc::Commands
       end.on('.').run
     end
 
-    def deduce_subfolder_paths sub, src, dest, site_path
-      paths = [src, dest].map do |which|
-        case which
-          when :output;  "#{site_path}/output/#{sub}"
-          when :content; "#{site_path}/content/#{sub}"
-          when :proto;   proto_path(site_path)+'/content/'+sub
-          else fail(
-            "implement me: get #{which.to_s} path from #{src.inspect}")
-        end
-      end
-      paths
-    end
-
-    def deduce_layout_paths src, dest, site_path
-      if [src, dest].index(:output)
-        task_abort "Sorry, it doesn't make sense to look at layout " <<
-        "in output directory because there is none.\n" <<
-        "Please use -P or -p to compare layout btwn proto and <my-site>.\n"<<
-        "usage: #{usage}\n#{invite_to_more_command_help}"
-      end
-      paths = [src, dest].map do |which|
-        case which
-          when :content; site_path + '/layouts'
-          when :proto;   proto_path(site_path)+'/layouts'
-          else fail(
-            "implement me: get #{which.to_s} path from #{src.inspect}")
-        end
-      end
-      paths
-    end
-
-    def deduce_paths src, dest, subset, site_path
-      paths = case subset
-        when 'css';     deduce_subfolder_paths 'css', src, dest, site_path
-        when 'layouts'; deduce_layout_paths src, dest, site_path
-        when 'js';      deduce_subfolder_paths 'js', src, dest, site_path
-        else; fail("unimplemented subset: #{subset}")
-      end
-      src_path, dest_path = paths
-      assert_path "css source path",      src_path
-      assert_path "css destination path", dest_path
-      [src_path, dest_path]
-    end
-
-    def deduce_src_and_dest site_path, opts
-      flag = exclusive_opt_flags(opts) do
-        flags :content_to_output, :content_to_proto,
-              :output_to_content, :proto_to_content
-        default '-c', :content_to_output
-      end
-      /\A(.+)_to_(.+)\Z/ =~ flag.to_s or fail("no: #{flag}")
-      src, dest = $1.to_sym, $2.to_sym
-      [src, dest]
-    end
-
     def subsets
       cmd = self
       @subsets ||= OptEnum.new do |oe|
         command cmd
         name :subset
-        values %w(css layouts js)
+        values %w(css layouts js root)
         default 'css'
       end
     end

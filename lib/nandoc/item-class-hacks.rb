@@ -1,6 +1,6 @@
 class Nanoc3::Item
   #
-  # Little hacks we may or may not use for stuff like sitemap generation.
+  # hacks we use for stuff like sitemap and topnav generation
   #
   class << self
     def sorted_visible_children
@@ -22,7 +22,7 @@ class Nanoc3::Item
   #
   def nandoc_title
     if @attributes[:title]
-        @attributes[:title]
+      @attributes[:title]
     elsif ! nandoc_content_node?
       identifier
     elsif no_ext = basename_no_extension(@attributes[:content_filename])
@@ -35,7 +35,7 @@ class Nanoc3::Item
   end
 
   def nandoc_content_node?
-    /\A\/css\// !~ identifier # @todo will have to change!
+    /\A\/(?:css|js)\// !~ identifier # @todo will have to change!
   end
 
   def nandoc_content_leaf?
@@ -46,8 +46,12 @@ class Nanoc3::Item
     false # hm
   end
 
+  def nandoc_sorted_visible_children
+    self.class.sorted_visible_children.call(self)
+  end
+
   def nandoc_visible?
-    !self[:hidden] && path
+    !self[:hidden] && path && nandoc_content_node?
   end
 
 end
