@@ -1,5 +1,22 @@
 module NanDoc::Helpers::NanDocHelpers
 
+  #
+  # nandoc_topnav do |sm|
+  #   sm.binding = binding
+  #   sm.item { |i| <<-H
+  #     <span class='nanoc-sidebar-h2'>#{i.nandoc_title}</span>
+  #   H
+  #   }
+  #   sm.current_item { |i| <<-H
+  #     <span class='nanoc-sidebar-h2'>#{i.nandoc_title}</span>
+  #   H
+  #   }
+  #   sm.separator { <<-H
+  #     <span class='nanoc-sep'>&#10087;</span>
+  #   H
+  #   }
+  #
+
   def nandoc_topnav &block
     TopNav.new(&block).render
   end
