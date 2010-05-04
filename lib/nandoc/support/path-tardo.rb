@@ -9,6 +9,19 @@ module NanDoc
     end
     module_function :tardo_array_index
 
+    def hash_to_paths hash, prefix=nil
+      paths = []
+      hash.each do |k,v|
+        ch_prefix = [prefix, k].compact.join('/')
+        if v.kind_of?(Hash)
+          paths.concat hash_to_paths(v, ch_prefix)
+        else
+          paths.push ch_prefix
+        end
+      end
+      paths
+    end
+
     def path_tardo hash_or_array, path_tardo, prefix = ''
       /\A([^\/]+)(?:\/(.+))?\Z/ =~ path_tardo or
         fail("no parse: #{path_tardo}")
