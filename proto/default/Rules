@@ -17,27 +17,6 @@ PassThru.each do |x|
   compile("/#{x[:dir]}/*/"){ } # don't filter or layout
 end
 
-nandoc_ds = @site.config[:data_sources].first
-fail("nandoc hack failed!") unless nandoc_ds[:type] == 'nandoc'
-
-nandoc_ds[:config][:source_file_basenames].each do |name|
-  identifier_pattern = "/#{name}/*" # e.g. '/README/*'
-  compile identifier_pattern do
-    filter :erb
-    filter :kramdown
-    layout 'default'
-  end
-end
-
-# if we are using e.g. README.md for main index
-if nandoc_ds[:config][:use_as_main_index].to_s =~ /\.md\Z/
-  compile '/' do
-    filter :erb
-    filter :kramdown
-    layout 'default'
-  end
-end
-
 PassThru.each do |x|
   dir, ext = x[:dir], x[:ext]
   route "/#{dir}/*" do
@@ -50,8 +29,11 @@ PassThru.each do |x|
   end
 end
 
+# removed some crazy logic in 4189c
+
 compile '*' do
   filter :erb
+  filter :kramdown
   layout 'default'
 end
 
