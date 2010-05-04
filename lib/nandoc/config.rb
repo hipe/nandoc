@@ -13,7 +13,7 @@ module NanDoc
     #
     # in the future make this smarter.  i don't like now nanoc handles color
     # (a command line argument?) There should be an autodetect, and/or set
-    # last setting in sticky json file; or however it is it is done.
+    # last setting in sticky json file; or however it is it is done. @todo
     #
     def colorize?
       true
@@ -40,12 +40,18 @@ module NanDoc
     def file_utils
       @file_utils ||= begin
         Treebis::FileUtilsProxy.new do |fu|
-          fu.pretty! # @todo color should be dynamic ick
+          fu.pretty!
+          fu.color?{ NanDoc::Config.colorize? }
           fu.prefix = ' ' * 6 # like nanoc
           fu.ui = proc{ $stdout }
           # it's normally $stderr, it needs to be reference-like
           # so that capture3 will work!
         end
+      end
+    end
+    module Accessors
+      def file_utils
+        NanDoc::Config.file_utils
       end
     end
   end
