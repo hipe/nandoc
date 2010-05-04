@@ -35,7 +35,7 @@ class Nanoc3::Item
   end
 
   def nandoc_content_node?
-    /\A\/(?:css|js)\// !~ identifier # @todo will have to change!
+    /\A\/(?:css|js|vendor)\// !~ identifier # @todo will have to change!
   end
 
   def nandoc_content_leaf?

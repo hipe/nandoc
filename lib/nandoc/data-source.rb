@@ -5,7 +5,8 @@ module NanDoc
     # Make a Nanoc3 DataSource class as necessary to A) pull in
     # content files that exist outside of the <my-site>/content directory and
     # B) allow one of those files to act as the root index page for the
-    # generated site, as indicated by config.yaml.
+    # generated site, as indicated by config.yaml. and C) rescue orphan
+    # files that have a parent directory but no parent file.
     #
 
 
@@ -37,7 +38,7 @@ module NanDoc
       error_for_no_files(dot_dot_names) if additional.empty?
       res = these + additional
       # deal_with_index_page_children(res) if @hax_index_page
-      rescue_orphans(res)
+      orphan_rescue(res)
       res
     end
 
@@ -128,24 +129,115 @@ module NanDoc
     end
 
     #
-    # Experimentally generate index pages for child nodes without them
+    # A) Experimentally generate index pages for child nodes without them
+    # B) merge many filesystem roots to one docroot (hack!) per 'basenames'
+    # (undefined on name collision)
     #
-    def rescue_orphans items
-      surrogate_content = File.read(NanDoc::Config.orphan_surrogate_filename)
-      items.each do |item|
-        parent_identifier = item.identifier.sub(/[^\/]+\/$/, '')
-        parent = items.find { |p| p.identifier == parent_identifier }
-        basenames = @config[:source_file_basenames] || []
-        if parent.nil? && item.identifier != '/' && item.nandoc_content_leaf?
-          (/\A\/([^\/]+)\// =~ item.identifier) && (base = $1) or fail('no')
-          dot_dot = basenames.include?(base) ? '..' : ''
-          fake_path = dot_dot + item.identifier
-          fake_item = Nanoc3::Item.new(
-            surrogate_content,
-            {:filename => fake_path, :content_filename=> fake_path },
-            parent_identifier
-          )
-          items.unshift(fake_item)
+    def orphan_rescue items
+      Orphanage.rescue_orphans(@config, items)
+    end
+
+  private
+
+    module ItemMethods
+      # must have @items.  make public if u need it
+
+      def find_parent item_identifier
+        parent_path = parent_identifier(item_identifier)
+        parent = @items.find { |p| p.identifier == parent_path }
+        parent
+      end
+      def identifier_bare_rootname identifier
+        /\A\/([^\/]+)\// =~ identifier and $1
+      end
+      def identifier_bare_rootname_assert identifier
+        identifier_bare_rootname(identifier) or
+          fail("hack fail: couldn't find rootname for #{identifier.inspect}")
+      end
+      # exactly one leading and one trailing slash
+      def identifier_strip identifier
+        /\A\/(.+)\/\Z/ =~ identifier and $1
+      end
+      def identifier_strip_assert identifier
+        identifier_strip(identifier) or fail("hack fail: #{identifier}")
+      end
+      def parent_identifier identifier
+        identifier.sub(/[^\/]+\/$/, '')
+      end
+      def site_root
+        @site_root ||= @items.find{|x| x.identifier == '/' }
+      end
+    end
+
+    class Orphanage
+      #
+      # @api private implementation for experimental orphan_rescue()
+      #
+      include ItemMethods
+      class << self
+        def rescue_orphans config, items
+          new(config, items).rescue_orphans
+        end
+        private :new
+      end
+
+      def rescue_orphans
+        items = @items.map # we are going to add to it in loop below
+        items.each do |item|
+          next unless is_orphan? item
+          id = item.identifier
+          parent_id = parent_identifier(id)
+          bare_root = identifier_bare_rootname_assert(id)
+          bare_parent = identifier_strip_assert(parent_id)
+          new_id = nil
+          @renamer = nil
+          if @basenames.include?(bare_root)
+            # then we need to hack a rename to the identifier
+            @renamer = /\A\/#{Regexp.escape(bare_root)}\/(.+)\Z/
+            new_id = rename(id)
+          end
+          if (!new_id || bare_parent!=bare_root) && is_orphan?(item, new_id)
+            make_surrogate_parent parent_id
+          end
+          item.identifier = new_id if new_id
+        end
+      end
+    private
+      def initialize config, items
+        @basenames = config[:source_file_basenames] || []
+        @items = items
+      end
+
+      def is_orphan? item, using_identifier=nil
+        item.nandoc_content_leaf? or return false
+        using_identifier ||= item.identifier
+        parent = find_parent using_identifier
+        parent.nil? && using_identifier != '/'
+      end
+
+      def make_surrogate_parent parent_id
+        use_id = @renamer ? rename(parent_id) : parent_id
+        use_path = @renamer ? "../#{parent_id}" : parent_id
+        content = surrogate_content
+        fake_parent = Nanoc3::Item.new(
+          content,
+          {:filename => use_path, :content_filename => use_path },
+          use_id
+        )
+        @items.unshift(fake_parent)
+      end
+
+      # don't use this
+      def rename str
+        @renamer =~ str or
+          fail("rename fail: #{str.inspect} against #{@rename}")
+        renamed = "/#{$1}"
+        renamed
+      end
+
+      def surrogate_content
+        @surrogate_content ||= begin
+          File.read(NanDoc::Config.orphan_surrogate_filename)
         end
       end
     end
