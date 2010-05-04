@@ -1,3 +1,6 @@
-### <%= @item.nandoc_title %>
+## <%= @item.nandoc_title %>
 
-this is where the children would go
+<% cx = @item.nandoc_sorted_visible_children %>
+<% cx.each do |item| %>
+* <%= link_to(item.nandoc_title, item.path) %>
+<% end %>
