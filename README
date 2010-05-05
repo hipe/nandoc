@@ -1,8 +1,27 @@
-### fun times ###
+# NanDoc
+this is a hack. this is nandoc.
+
+## Here is
+some more
+
+### Third Level
+title
 
 blah
 blah
 
-~~~
-some code
-~~~
+    ruby:
+    ~~~
+    foo = Bar.new(:baz => 'biff')
+    foo.run
+    ~~~
+
+this is some not code
+
+
+    ruby:
+    ~~~
+    fake = ruby(:not => 'really')
+    ~~~
+
+this the end
