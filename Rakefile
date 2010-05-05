@@ -1,4 +1,5 @@
 require 'rake/gempackagetask.rb'
+require File.expand_path('../lib/nandoc/parse-readme.rb', __FILE__)
 
 task :default => :test
 
@@ -8,19 +9,17 @@ spec = Gem::Specification.new do |s|
   s.date = Time.now.to_s
   s.email = "chip.malice@gmail.com"
   s.authors = ["Chip Malice"]
-  s.summary = "hack nanoc to turn your README into a sitelette"
+  s.summary = NanDoc::ParseReadme.summary('README')
   # s.homepage = "http://nandoc.rubyforge.org"
   s.files = %w(
     lib/nandoc.rb
     ) + Dir["*.md"]
   s.executables = ['nandoc']
+  s.description = NanDoc::ParseReadme.description('README')
   # s.rubyforge_project = "nandoc"
-  s.description = <<-HERE
-    make a static site from your README file(s) to document your gem
-  HERE
 end
 
-Rake::GemPackageTask.new(spec){}
+Rake::GemPackageTask.new(spec){ }
 
 desc "hack turns the installed gem into a symlink to this directory"
 task :hack do
