@@ -78,7 +78,7 @@ module NanDoc::Commands
       src, dest = deduce_src_and_dest site_path, opts
       subset = subsets.parse(opts)
       if opts[:patch] # @todo this doesn't belong here probably
-        patch_opts = process_patch_opts(opts)
+        patch_opts = process_patch_opts(opts, src, dest, site_path)
         go_patch src, dest, subset, site_path, patch_opts
       else
         process_diff_opts(opts) and fail("no more opts for this guy")
@@ -238,7 +238,7 @@ module NanDoc::Commands
       end
     end
 
-    PatchPassThru = [:backup, :dry_run]
+    PatchPassThru = [:backup, :dry_run, :directory]
     def process_diff_opts opts
       if (bad = opts.keys & PatchPassThru).any?
         bads = bad.map{|x| unnormalize_opt_key(x)}.join('and')
@@ -247,12 +247,33 @@ module NanDoc::Commands
       end
     end
 
-    def process_patch_opts opts
-      ptks = opts.keys & PatchPassThru
-      pths = ptks.map{|k| unnormalize_opt_key(k)}
-      ptha = Hash[pths.zip(Array.new(pths.size, ''))]
-      ptha['--posix'] = '' # always on else patches don't work
-      {:pass_thru => ptha }
+    def process_patch_opts opts, src, dest, site_path
+      keys = opts.keys & PatchPassThru
+      switches = keys.map{|k| unnormalize_opt_key(k)}
+      switch_h = Hash[switches.zip(Array.new(switches.size, ''))]
+      switch_h['--posix'] = '' # always on else patches don't work
+      process_patch_opts_for_directory switch_h, opts, src, dest, site_path
+      {:pass_thru => switch_h }
+    end
+
+    #
+    # when applying a root-based patch to a prototype we will have to change
+    # directory to that prototype, just for when we apply the patch. and..?
+    #
+    def process_patch_opts_for_directory switch_h, opts, src, dest, site_path
+      return unless opts[:subset] == 'root'
+      if ! opts[:proto_to_content]
+        task_abort("we need to test this for root patching for this target")
+      end
+      # it's not explicitly an available pass-thru option
+      fail("huh?") if switch_h['--directory'] ||
+        switch_h.keys.grep(/^-p\d+$/).any?
+      proto = proto_path(site_path)
+      # for a path like './a/Rules', we cd to the root of the proto, so we
+      # want to disregard two levels of path context.
+      switch_h['-p2'] = ''
+      switch_h['--directory'] = proto
+      nil
     end
   end
 end
