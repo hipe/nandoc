@@ -1,5 +1,7 @@
 require 'rake/gempackagetask.rb'
 
+task :default => :test
+
 spec = Gem::Specification.new do |s|
   s.name = "nandoc"
   s.version = '0.0.0'
@@ -28,6 +30,16 @@ task :hack do
   FileUtils.mv(kill_path, new_name, :verbose => 1)
   this_path = File.dirname(__FILE__)
   FileUtils.ln_s(this_path, kill_path, :verbose => 1)
+end
+
+desc "generate rcov coverage"
+task :rcov do
+  sh %!rcov --exclude '.*gem.*' test/test.rb -- --seed 0!
+end
+
+desc "run the test file"
+task :test do
+  sh %!ruby -w -e 'require "test/test.rb"'!
 end
 
 desc "remove temporary, generated files like coverage"

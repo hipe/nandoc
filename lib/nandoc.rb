@@ -31,6 +31,7 @@ require me + '/data-source.rb'
 require me + '/filters.rb'
 require me + '/helpers.rb'
 require me + '/item-class-hacks.rb'
+require me + '/mock-prompt.rb'
 
 Nanoc3::DataSource.register ::NanDoc::DataSource, :nandoc
 Nanoc3::Filter.register ::NanDoc::Filters::General, :nandoc
