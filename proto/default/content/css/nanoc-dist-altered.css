@@ -151,6 +151,9 @@ letter-spacing: 1px;
 line-height: 20px;
 text-transform: uppercase;
 }
+#main h2, #main h3, #main h4, #main h5, #main h6{
+margin: 0.5em 0
+}
 #nandoc-site-map {
 margin: 10px 12px 10px 0px
 }

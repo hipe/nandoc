@@ -78,3 +78,15 @@ margin: 0 0;
 #sidebar ul.nested li {
 line-height: 1em;
 }
+.terminal {
+background:none repeat scroll 0 0 #111122;
+color:#228822;
+padding:10px;
+/*width:800px;*/
+}
+.terminal .prompt {
+color:#00C23C;
+}
+.terminal .normal {
+color:#AFE793
+}
