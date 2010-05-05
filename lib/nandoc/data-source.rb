@@ -6,7 +6,10 @@ module NanDoc
     # content files that exist outside of the <my-site>/content directory and
     # B) allow one of those files to act as the root index page for the
     # generated site, as indicated by config.yaml. and C) rescue orphan
-    # files that have a parent directory but no parent file.
+    # files that have a parent directory but no parent file, and
+    # D) to see as text files without an extension (e.g. README)
+    #
+    # Some of the hacks in this file are the worst in the whole project. @todo
     #
 
 
@@ -14,9 +17,34 @@ module NanDoc
 
     def initialize *a
       super(*a)
+
+      # hack to see as text files without an extension!
+      unless @site.config[:text_extensions].include?(nil)
+        @site.config[:text_extensions].unshift(nil)
+      end
+      @hax_filename_for_last = nil
       @config = a.last
+      @basenames = @config[:source_file_basenames] or
+        fail("must have source_file_basenames in config.yaml  "<<
+          "for nandoc to work."
+        )
       @hax_mode = false # this gets turned on when we are doing s/thing weird
+      @hax_root_found = false
     end
+    
+    #
+    # the content filename for ../README is ../README
+    #
+    def filename_for(base_filename, ext)
+      return super unless @hax_mode && ext.nil?
+      if @hax_filename_for_last != base_filename
+        @hax_filename_for_last = base_filename
+        return super
+      else
+        base_filename
+      end
+    end
+
 
     #
     # Hack the items returned by this datasource object to include also
@@ -26,18 +54,20 @@ module NanDoc
     # Rescue orphan nodes with no parent page somehow.
     #
     def items
-      @hax_index_page = false
       _ = Nanoc3::Item # autoload it now for easier step debug-ging
       these = super
-      dot_dot_names = @config[:source_file_basenames].map{|x| "../#{x}"}
+      dot_dot_names = @basenames.map{|x| "../#{x}"}
       @hax_mode = true
       additional = dot_dot_names.map do |basename|
-        load_objects(basename, 'item', Nanoc3::Item)
-      end.flatten(1)
+        if File.file?(basename) # was different
+          load_objects(basename, 'item', Nanoc3::Item)
+        else
+          load_objects(basename, 'item', Nanoc3::Item)
+        end
+      end.compact.flatten(1)
       @hax_mode = false
       error_for_no_files(dot_dot_names) if additional.empty?
       res = these + additional
-      # deal_with_index_page_children(res) if @hax_index_page
       orphan_rescue(res)
       res
     end
@@ -50,13 +80,15 @@ module NanDoc
     #
     def all_split_files_in dir_name
       return super unless @hax_mode
-      @hax_last_dir_name = dir_name
+      @hax_last_dirname = dir_name
       ret = super
-      lone_file = "#{dir_name}.md"
-      if File.exist?(lone_file) # e.g. '../README.md'
+      lone_files = ["#{dir_name}.md", dir_name]
+      lone_file = find_first_file(lone_files)
+      if lone_file  # e.g. '../README.md', 'README'
         @hax_last_filename = lone_file.dup
         class << lone_file
           #
+          # supremely fragile hack:
           # make it so that it ignores the next + operation in the first
           # line of Nanoc3::DataSources::Filesystem#all_split_files_in()
           # this is shorter and easier than overriding and rewring
@@ -71,26 +103,7 @@ module NanDoc
       ret
     end
 
-    # Let's see if rescuing orphans fixes this.
-    #
-    #
-    #
-    # I *think* we want this.   See if it makes sense in the site map.
-    # Site#setup_child_parent_links() sets up this stuff later,
-    # we need to make a new node to stand in for the one we lost or
-    # etc etc
-    #
-    # def deal_with_index_page_children items
-    #   # note @hax_mode must be off below
-    #   would_have_been = identifier_for_filename @config[:use_as_main_index]
-    #   re1 = /\A#{Regexp.escape(would_have_been)}/
-    #   re2 = /\A#{Regexp.escape(would_have_been)}(.+)\Z/
-    #   orphans = items.select{|x| x.identifier =~ re1 }
-    #   orphans.each do |orph|
-    #     re2 =~ orph.identifier or fail("fail")
-    #     orph.identifier = "/#{$1}"
-    #   end
-    # end
+    # removed old deal_with_index_page_children in e7bf7ee
 
     #
     # We crap out if we didn't find any weird files because after all
@@ -104,26 +117,49 @@ module NanDoc
       HERE
     end
 
+    def find_first_file names
+      names.detect{ |n| File.file?(n) }
+    end
+
     #
     # more crazy hacks - normally content/foo/bar.html => "/foo/bar/" but
     # for this case we don't want to have stripped the containing folder,
     # *and* we try to hack it so that it's laid alongside content in
-    # the content folder for the final site.
+    # the content folder for the final site. (or not, here)
+    # also we need to make sure one item is '/' somehow
+    # @todo unhack this whole page
+    #
+    # @todo some stuff that happens in the orphanage should happen here 
+    # instead
     #
     def identifier_for_filename fn
       return super unless @hax_mode
       if 'md' == fn # there has to be a better way :(
-        /\A\.\.\/(.*)\Z/ =~ @hax_last_filename or fail('hack fail 1')
-        if $1 == @config[:use_as_main_index] # 'README.md'
+        no_dot_dot = dot_dot_strip_assert(@hax_last_filename)
+        if no_dot_dot == @config[:use_as_main_index] # 'README.md'
           identifier = '/' # overwrite the index.html generated by nandoc!
-          @hax_index_page = true
         else
-          identifier = super($1) # '../README.md' => 'README.md' => '/README/'
+          # '../README.md' => 'README.md' => '/README/'
+          identifier = super(no_dot_dot) 
         end
       else
-        /\A\.\.(.*)\Z/ =~ @hax_last_dir_name or fail('hack fail 2')
-        without = super(fn) # $1 => '/README' without => '/foo/'
-        identifier = "#{$1}#{without}"
+        if fn
+          if dot_dot_has?(fn)
+            debugger; 'fix this'
+          end
+          identifier = super(fn)
+        else
+          identifier = dot_dot_strip_assert(@hax_last_dirname)+'/'
+        end
+      end
+      # before we get to resuce orphans we need to make sure we have 
+      # resolved some file as a site root.  First one wins.
+      if ! @hax_root_found
+        shorter = slash_strip_assert(identifier)
+        if @basenames.include?(shorter)
+          @hax_root_found = true
+          identifier = '/'
+        end
       end
       identifier
     end
@@ -134,6 +170,7 @@ module NanDoc
     # (undefined on name collision)
     #
     def orphan_rescue items
+      require File.expand_path('../support/orphanage.rb', __FILE__)
       Orphanage.rescue_orphans(@config, items)
     end
 
@@ -155,11 +192,11 @@ module NanDoc
           fail("hack fail: couldn't find rootname for #{identifier.inspect}")
       end
       # exactly one leading and one trailing slash
-      def identifier_strip identifier
+      def slash_strip identifier
         /\A\/(.+)\/\Z/ =~ identifier and $1
       end
-      def identifier_strip_assert identifier
-        identifier_strip(identifier) or fail("hack fail: #{identifier}")
+      def slash_strip_assert identifier
+        slash_strip(identifier) or fail("hack fail: #{identifier}")
       end
       def parent_identifier identifier
         identifier.sub(/[^\/]+\/$/, '')
@@ -167,79 +204,17 @@ module NanDoc
       def site_root
         @site_root ||= @items.find{|x| x.identifier == '/' }
       end
-    end
-
-    class Orphanage
-      #
-      # @api private implementation for experimental orphan_rescue()
-      #
-      include ItemMethods
-      class << self
-        def rescue_orphans config, items
-          new(config, items).rescue_orphans
-        end
-        private :new
+      def dot_dot_has? str
+        /\A\.\./ =~ str
       end
-
-      def rescue_orphans
-        items = @items.map # we are going to add to it in loop below
-        items.each do |item|
-          next unless is_orphan? item
-          id = item.identifier
-          parent_id = parent_identifier(id)
-          bare_root = identifier_bare_rootname_assert(id)
-          bare_parent = identifier_strip_assert(parent_id)
-          new_id = nil
-          @renamer = nil
-          if @basenames.include?(bare_root)
-            # then we need to hack a rename to the identifier
-            @renamer = /\A\/#{Regexp.escape(bare_root)}\/(.+)\Z/
-            new_id = rename(id)
-          end
-          if (!new_id || bare_parent!=bare_root) && is_orphan?(item, new_id)
-            make_surrogate_parent parent_id
-          end
-          item.identifier = new_id if new_id
-        end
+      def dot_dot_strip str
+        /\A\.\.(.*)\Z/ =~ str and $1
       end
-    private
-      def initialize config, items
-        @basenames = config[:source_file_basenames] || []
-        @items = items
-      end
-
-      def is_orphan? item, using_identifier=nil
-        item.nandoc_content_leaf? or return false
-        using_identifier ||= item.identifier
-        parent = find_parent using_identifier
-        parent.nil? && using_identifier != '/'
-      end
-
-      def make_surrogate_parent parent_id
-        use_id = @renamer ? rename(parent_id) : parent_id
-        use_path = @renamer ? "../#{parent_id}" : parent_id
-        content = surrogate_content
-        fake_parent = Nanoc3::Item.new(
-          content,
-          {:filename => use_path, :content_filename => use_path },
-          use_id
-        )
-        @items.unshift(fake_parent)
-      end
-
-      # don't use this
-      def rename str
-        @renamer =~ str or
-          fail("rename fail: #{str.inspect} against #{@rename}")
-        renamed = "/#{$1}"
-        renamed
-      end
-
-      def surrogate_content
-        @surrogate_content ||= begin
-          File.read(NanDoc::Config.orphan_surrogate_filename)
-        end
+      def dot_dot_strip_assert str
+        dot_dot_strip(str) or
+          fail("hack fail: no leading dot dot: #{str.inspect}")
       end
     end
+    include ItemMethods
   end
 end
