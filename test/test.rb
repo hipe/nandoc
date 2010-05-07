@@ -33,9 +33,9 @@ describe 'Basic' do
     hash_to_dir basic_tree, @pwd, file_utils
   end
 
-  # test_0001_will_foo_and_bar
-  it "will foo and bar" do
+  it 'basic usage -- readme' do
     prompt.cd(@pwd) do |p|
+      p.record
       p.enter2 'cat README'
       p.out <<-HERE
         # Hello
@@ -47,5 +47,30 @@ describe 'Basic' do
         ~~~
       HERE
     end
+  end
+
+  it 'basic usage -- create site' do
+    prompt.cd(@pwd) do |p|
+      p.record
+      p.enter2 'nandoc create_nandoc_site my-site'
+      p.out_begin <<-HERE
+        \e[1m\e[32m      create\e[0m  config.yaml
+        \e[1m\e[32m      create\e[0m  Rakefile
+        \e[1m\e[32m      create\e[0m  Rules
+        \e[1m\e[32m      create\e[0m  content/index.html
+      HERE
+      p.cosmetic_ellipsis "      [...]"
+      p.out_end <<-HERE
+              \e[1;32mcp\e[0m ...oto/default/layouts/default.html layouts/default.html
+              \e[1;32mcp\e[0m ...oto/default/lib/default.rb lib/default.rb
+        Created a blank nanoc site at 'my-site'. Enjoy!
+      HERE
+      p.record_stop
+      p.err ""
+    end
+  end
+
+  it 'basic usage -- compile site' do
+
   end
 end
