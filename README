@@ -1,27 +1,75 @@
 # NanDoc
-this is a hack. this is nandoc.
+this is a hack. this is nanDoc.
 
-## Here is
-some more
+## Summary
 
-### Third Level
-title
+hack of [nanoc3](http://nanoc.stoneship.org) to generate a static site from your README etc.
 
-blah
-blah
+## Description
 
-    ruby:
+Generate a static site from your README and other markdown-formatted
+documentation.  Inject code examples from your unit tests into
+the generated docs.  Extremely fragile hacks to nanoc3.
+
+(This entire site is generated from a README and other docs with all
+of the code examples coming from unit test "scrapes".)
+
+
+## Does this match you?
+
+* Tired of all the other unit-test-driven static documentation-site-generators
+that fall short of the usual promises?
+
+* Agile development has your doc content going rapidly stale?
+
+* Sick of typing what you want to write by hand?
+
+* Repeatedly hearing yourself repeat to yourself "Don't Repeat Yourself?"
+
+* Don't underkill your documentation when it's so easy to &Uuml;berkill&trade; it!  Don't be fooled by impostors!
+
+<b>IF</b> you ansewered <b>YES</b> to zero or more of the above questions (of those that were
+questions and not imperative statements), then <b>DON'T WAIT!</b>   Press that
+big giant silver spherical DWIM button floating in the sky!
+
+
+## High Concept
+A semi-attractive RIA sopping with Web 1.0 gooey-goodness is just a view on your existing
+vanilla documentation that you've surely been writing all along.
+
+
+
+## Installation
+
+(this is fragile and subject to change:)
+    from the command line:
     ~~~
-    foo = Bar.new(:baz => 'biff')
-    foo.run
+    ~/tmp > git clone git@github.com:hipe/nandoc.git
+    ~/tmp > cd nandoc
+    ~/tmp/nandoc > rake gem
+    ~/tmp/nandoc > gem install -n ~/bin pkg/nandoc-0.0.0.gem
     ~~~
 
-this is some not code
+## Usage Summary
+
+Start with  a markdown-formatted README file:
+
+(see: test.rb - "basic usage -- readme")
 
 
-    ruby:
-    ~~~
-    fake = ruby(:not => 'really')
-    ~~~
+Then, next to this readme create a nanoc3 site project with
+nanDoc&reg;-powered&trade; nanoc&copy;:
 
-this the end
+(see: test.rb - 'basic usage -- create site')
+
+Finally, compile your site with the nanoc3 compile command...[@todo]
+
+
+If all the bells are polished and whistles tuned, you will have a
+site as handsome, usable as self-unawarely-understatedly brilliant as this
+one, but stunningly and proudly your own.
+
+Genius never looked so stupid.
+
+
+<span style='font-size: 10px'>appologies to william morgan's [trollop](http://trollop.rubyforge.org/) site, product, and person for unwittingly encouraging me, and providing the CSS styles for the code.</span>
