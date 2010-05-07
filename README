@@ -50,6 +50,7 @@ vanilla documentation that you've surely been writing all along.
     ~/tmp/nandoc > gem install -n ~/bin pkg/nandoc-0.0.0.gem
     ~~~
 
+
 ## Usage Summary
 
 Start with  a markdown-formatted README file:
@@ -62,7 +63,9 @@ nanDoc&reg;-powered&trade; nanoc&copy;:
 
 (see: test.rb - 'basic usage -- create site')
 
-Finally, compile your site with the nanoc3 compile command...[@todo]
+Finally, compile your site with the nanoc3 compile command:
+
+(see: test.rb - 'basic usage -- create site' - 'compile site')
 
 
 If all the bells are polished and whistles tuned, you will have a
