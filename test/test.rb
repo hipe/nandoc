@@ -67,10 +67,24 @@ describe 'Basic' do
       HERE
       p.record_stop
       p.err ""
+      p.record 'compile site'
+      p.cd(@pwd,'my-site') do
+        p.enter2 'nandoc compile'
+        p.out((
+        <<-HERE
+        Loading site data...
+        Compiling site...
+        \e[1m\e[32m      create\e[0m  [0.00s]  output/vendor/jquery.easing.1.3.js
+        \e[1m\e[32m      create\e[0m  [0.00s]  output/css/trollop-subset.css
+        \e[1m\e[32m      create\e[0m  [0.00s]  output/vendor/jquery-1.3.js
+        \e[1m\e[32m      create\e[0m  [0.00s]  output/js/menu-bouncy.js
+        \e[1m\e[32m      create\e[0m  [0.00s]  output/css/nanoc-dist-altered.css
+        \e[1m\e[32m      create\e[0m  [0.16s]  output/index.html
+
+        Site compiled in 0.17s.
+        HERE
+        ), :ignoring => /\d\.\d\ds/ )
+      end
     end
-  end
-
-  it 'basic usage -- compile site' do
-
   end
 end
