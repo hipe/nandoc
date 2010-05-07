@@ -42,6 +42,11 @@ module MiniTest
           end
         end
       end
+      if re = opts[:ignoring]
+        exp, act = [exp, act].map do |str|
+          str.kind_of?(String) ? str.gsub(re, re.source) : str
+        end
+      end
       assert(exp == act, msg)
     end
   end
