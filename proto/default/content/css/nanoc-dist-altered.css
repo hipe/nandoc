@@ -130,7 +130,7 @@ color: #f30;
 .clear {
 clear: both;
 }
-.debugging-outline {
+.debug-ging-outline {
 border: 1px solid orange;
 }
 .nandoc-menu-lvl-1{
@@ -152,7 +152,13 @@ line-height: 20px;
 text-transform: uppercase;
 }
 #main h2, #main h3, #main h4, #main h5, #main h6{
-margin: 0.5em 0
+margin: 0.8em 0 0.4em 0
+}
+#main p{
+margin: 0 0 0.4em 0;
+}
+#main ul{
+margin: 0 0 0 1.0em;
 }
 #nandoc-site-map {
 margin: 10px 12px 10px 0px

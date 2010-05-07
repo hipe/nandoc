@@ -80,13 +80,43 @@ line-height: 1em;
 }
 .terminal {
 background:none repeat scroll 0 0 #111122;
-color:#228822;
+/*color:#228822; this is green*/
+color:#AFE793; /* this is pale green*/
+margin:0 0 0.5em 0;
 padding:10px;
 /*width:800px;*/
 }
-.terminal .prompt {
+.terminal .prompt { /* same as 'green' below */
 color:#00C23C;
 }
 .terminal .normal {
 color:#AFE793
+}
+.terminal .bright {
+font-weight: bold;
+}
+.terminal .black {
+color:#000000;
+}
+.terminal .green {
+/* this is iTerm per digital color meter, not per web colors */
+color:#00C23C;
+}
+.terminal .red {
+color:#FF0000;
+}
+.terminal .yellow {
+color:#FFFF00;
+}
+.terminal .blue {
+color:#0000FF;
+}
+.terminal .magenta {
+color:#FF00FF;
+}
+.terminal .cyan {
+color:#00FFFF;
+}
+.terminal .white {
+color:#FFFFFF;
 }
