@@ -4,27 +4,41 @@ require 'minitest/spec'
 
 module NanDoc
   class SpecDoc
+
     def initialize gem_root
       @gem_root = gem_root
       @setup = false
+      @sexp_cache = Hash.new{|h,k| h[k] = {}}
     end
+
+    #
+    # only run any test method at most once, just to keep recordings clean
+    #
     def get_sexp testfile, testname
       setup unless @setup
-      load_file testfile
-      test_case, meth_name = find_test testname
-      unambig_re = /\A#{Regexp.escape(meth_name)}\Z/
-      runner = MiniTest::Unit.new
-      runner.instance_variable_set('@verbose', true)
-      test_count, ass_count = runner.run_test_suites unambig_re
-      fail("didn't run any tests for #{unambig_re.source}") unless
-        test_count == 1
-      recs = SpecDoc::Recordings.for_test_case[test_case] or
-        fail("no recordings found for #{test_case}")
-      sexp = recs.get_first_sexp_for_test_method(meth_name) or
-        fail("no recordings found for #{meth_name}")
+      sexp = @sexp_cache[testfile][testname] ||= begin
+        load_file testfile
+        test_case, meth_name = find_test testname
+        unambig_re = /\A#{Regexp.escape(meth_name)}\Z/
+        runner = MiniTest::Unit.new
+        runner.instance_variable_set('@verbose', true)
+        test_count, ass_count = runner.run_test_suites unambig_re
+        fail("didn't run any tests for #{unambig_re.source}") unless
+          test_count == 1
+        if runner.report.any?
+          handle_failed_tests(runner, testfile, testname) == 0 or return
+        end
+        recs = SpecDoc::Recordings.for_test_case[test_case] or
+          fail SpecDoc::Recordings.report_test_case_not_found(test_case)
+        sexp = recs.get_first_sexp_for_test_method(meth_name) or
+          fail recs.report_recording_not_found(meth_name)
+        sexp
+      end
       sexp
     end
+
   private
+
     def find_test str
       meth_tail = str.gsub(/\W+/, '_').downcase
       # i *think* we want *not* to escape it below
@@ -48,6 +62,15 @@ module NanDoc
         " -- (#{found_meths.join(', ')})")
       end
     end
+    def handle_failed_tests runner, testfile, testname
+      err.print "can't SpecDoc. at least one test failed when trying to run"
+      err.puts " #{testfile.inspect} #{testname.inspect} - "
+      runner.report.each do |line|
+        err.puts line
+      end
+      err.puts "Please get your tests green and re-run."
+      exit(1);
+    end
     def load_file testfile
       path = testdir + '/' + testfile
       fail("test file not found: #{path.inspect}") unless File.file?(path)
@@ -62,6 +85,13 @@ module NanDoc
       sing = class << MiniTest::Unit; self end
       sing.send(:define_method, :autorun){ } # override it to do nothing!!
       @setup = true
+    end
+    def err
+      $stderr
+    end
+    def testout_str
+      @testout.rewind
+      @testout.read
     end
     def testdir
       @testdir ||= begin
@@ -80,11 +110,15 @@ module NanDoc
         def get test_case
           @for_test_case[test_case.class] ||= new(test_case.class)
         end
+        def report_test_case_not_found tc
+          msgs = ["no recordings found for #{tc}"]
+          msgs.join('  ')
+        end
       end
 
-      def add name, data
+      def add name, *data
         # this might change if we need to group by method name
-        push [name, data]
+        push [name, *data]
       end
 
       def get_first_sexp_for_test_method meth
@@ -99,6 +133,10 @@ module NanDoc
 
       def initialize test_case
         @test_case = test_case
+      end
+
+      def report_recording_not_found meth_name
+        "no recordings found for #{meth_name}"
       end
 
       attr_reader :test_case
