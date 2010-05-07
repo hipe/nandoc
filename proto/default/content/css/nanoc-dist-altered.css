@@ -26,14 +26,15 @@ a:hover {
   color: #f90;
 }
 
-#main {
-  position: absolute;
-  top: 40px;
-  left: 280px;
-  width: 500px;
+.main{
+  float:left;
+  left:59px;
+  position:relative;
+  top:40px;
+  width:500px;
 }
 
-#main h1 {
+.main h1 {
   font-size: 40px;
   font-weight: normal;
   line-height: 40px;
@@ -47,19 +48,20 @@ a:hover {
 }
 
 /*
-#main ul {
+.main ul {
   margin: 20px;
 }*/
 /*
-#main li {
+.main li {
   list-style-type: square;
   font-size: 15px;
   line-height: 20px;
 }
 */
 
-#sidebar {
-  position: absolute;
+.sidebar {
+  position: relative;
+  float: left;
   top: 40px;
   left: 20px;
   width: 200px;
@@ -68,16 +70,16 @@ a:hover {
   text-align: right;
 }
 
-#sidebar h2 {
+.sidebar h2 {
   /* moved to a class to make it more reusable */
 }
 
-#sidebar ul {
+.sidebar ul {
   list-style-type: none;
   margin: 20px 0;
 }
 
-#sidebar li {
+.sidebar li {
   font-size: 14px;
   line-height: 20px;
 }
@@ -151,14 +153,20 @@ letter-spacing: 1px;
 line-height: 20px;
 text-transform: uppercase;
 }
-#main h2, #main h3, #main h4, #main h5, #main h6{
+.main h2, .main h3, .main h4, .main h5, .main h6{
 margin: 0.8em 0 0.4em 0
 }
-#main p{
+.main p{
 margin: 0 0 0.4em 0;
 }
-#main ul{
+.main ul{
 margin: 0 0 0 1.0em;
+}
+.sidebar ul.nested {
+margin: 0 0;
+}
+.sidebar ul.nested li {
+line-height: 1em;
 }
 #nandoc-site-map {
 margin: 10px 12px 10px 0px

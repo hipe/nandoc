@@ -11,26 +11,9 @@
     <meta name="generator" content="nanoc 3.1.2">
   </head>
   <body>
-    <div id="main">
-      <div class="nandoc-topnav">
-        <%=
-          These = {
-            '❦' => '&#10086;',
-            '❧' => '&#10087;',
-            '♠' => '&spades;'
-          } unless self.class.const_defined?('These') # hm
-          nandoc_menu_bouncy(binding) do |it|
-            it.separator = These['❧']
-            it.tabs = 4
-          end
-        %>
-        <div class='clear'></div>
-      </div>
-      <%= yield %>
-    </div>
-    <div id="sidebar">
+    <div class="sidebar">
       <h2 class='nanoc-sidebar-h2'>Documentation</h2>
-      <div id='nandoc-site-map'>
+      <div class='nandoc-site-map'>
         <%=
         nandoc_sitemap(binding) do |it|
           it.glyphs, it.root_identifier, it.tabs = :right, '/', 4
@@ -64,6 +47,23 @@
         <li><a href="irc://chat.freenode.net/#nanoc">IRC Channel</a></li>
         <li><a href="http://projects.stoneship.org/trac/nanoc/">Wiki</a></li>
       </ul><% end %>
+    </div>
+    <div class="main">
+      <div class="nandoc-topnav">
+        <%=
+          These = {
+            '❦' => '&#10086;',
+            '❧' => '&#10087;',
+            '♠' => '&spades;'
+          } unless self.class.const_defined?('These') # hm
+          nandoc_menu_bouncy(binding) do |it|
+            it.separator = These['❧']
+            it.tabs = 4
+          end
+        %>
+        <div class='clear'></div>
+      </div>
+      <%= yield %>
     </div>
   </body>
 </html>
