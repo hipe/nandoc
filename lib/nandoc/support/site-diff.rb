@@ -1,4 +1,3 @@
-require 'ruby-debug'
 require File.dirname(__FILE__)+'/diff-proxy.rb'
 
 module NanDoc
@@ -13,7 +12,7 @@ module NanDoc
     #
 
     include NanDoc::Config::Accessors   # file_utils()
-    include NanDoc::PathTardo           # debugging e.g. hash_to_paths()
+    include NanDoc::PathTardo           # debug-ging e.g. hash_to_paths()
     NanDoc.persistent_delegate_to(self) # empty_tmpdir()
     include Treebis::DirAsHash          # dir_as_hash()
     include Treebis::Capture3           # capture3()
