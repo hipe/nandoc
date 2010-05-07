@@ -100,8 +100,25 @@ module NanDoc::Filters
     ReSeeTest = /\(see: ((?:spec|test)[^\)]+)\)/
     NanDoc::RegexpEnhance.names(ReSeeTest, :content)
 
-    ReSeeTestParse = /\A((?:spec|test).*\.rb) ?(?:--?|\/) ?['"](.+)['"]\Z/
-    NanDoc::RegexpEnhance.names(ReSeeTestParse, :testfile, :testname)
+    ReSeeTestParse =
+      /\A((?:spec|test).*\.rb) ?(?:--?|\/) ?['"]([^'"]+)['"](.+)?\Z/
+    NanDoc::RegexpEnhance.names(ReSeeTestParse, :testfile, :testname, :xtra)
+
+    def initialize(*a)
+      super(*a)
+      @prompt_str = prompt_str_default
+    end
+
+    def advance_to_story sexp, md, idx
+      story = md[:xtra] =~ /\A *[-\/] *['"](.+)['"]\Z/ && $1 or
+        fail("couldn't parse out story name from #{md[:xtra].inspect}"<<
+        "expecting for e.g  \" - 'blah blah'\"")
+      idx = sexp.index{|x| x.first == :story && x[1] == story } or
+        fail("couldn't find story #{story.inspect}.  Known stories are: ("<<
+        sexp.select{|x| x.first == :story }.map{|x| "'#{x[1]}'"}.join(', ')<<
+        ")")
+      idx + 1
+    end
 
     def converter_ruby
       @converter_ruby ||= begin
@@ -128,7 +145,6 @@ module NanDoc::Filters
     end
 
     def filter_see_test content
-      # require File.dirname(__FILE__)+'/spec-doc.rb'
       with_each_tag_in(content, ReSeeTest) do |md|
         render_block_see_test md
       end
@@ -173,9 +189,25 @@ module NanDoc::Filters
       ret
     end
 
-    def prompt_str
+    def prompt_str_cd new_dir
+      /\A(.+) > \Z/ =~ prompt_str or
+        fail("can't determine cwd from #{prmpt_str.inspect}")
+      new_pwd = "#{$1}/#{new_dir}"
+      @old_prompts ||= []
+      @old_prompts.push prompt_str
+      @prompt_str = "#{new_pwd} > "
+      nil
+    end
+
+    def prompt_str_cd_pop
+      @prompt_str = @old_prompts.pop
+    end
+
+    def prompt_str_default
       '~ > '
     end
+
+    attr_reader :prompt_str
 
     def render_block_fence md
       if ! RecognizedTags.include?(md[:tag_name])
@@ -192,22 +224,30 @@ module NanDoc::Filters
     end
 
     def render_block_see_test md
-      md = ReSeeTestParse.match(md[:content]) or
+      md2 = ReSeeTestParse.match(md[:content]) or
         fail("couldn't parse see_test string: #{md[:content].inspect} -- "<<
          'string must look like: \'(see: test_file.rb/"some test name")\''
         )
       specdoc = converter_specdoc
-      sexp = specdoc.get_sexp md[:testfile], md[:testname]
-      i = -1
+      sexp = specdoc.get_sexp md2[:testfile], md2[:testname]
+      idx = 0
       last = sexp.length - 1
-      while( (i+=1) <= last )
-        node = sexp[i]
-        type = node.first
-        case type
-        when :method; # skip
-        when :command
-          i += process_sexp_command sexp, i
-        else fail("unexpected sexp node here: #{type.inspect}")
+      if md2[:xtra]
+        idx = advance_to_story(sexp, md2, idx)
+      end
+      idx += 1 if sexp[0] && sexp[0].first == :method && idx == 0
+      catch(:done) do
+        while idx <= last
+          node = sexp[idx]
+          type = node.first
+          case type
+          when :method; throw :done # stop at next story
+          when :cd, :command
+            idx += process_sexp_command sexp, idx
+          else
+            fail("unexpected sexp node here: #{type.inspect} idx: #{idx}")
+          end
+          idx += 1
         end
       end
     end
@@ -240,11 +280,16 @@ module NanDoc::Filters
         while j <= last
           type = sexp[j].first
           case type
+          when :cd;       lines.push "#{prompt_str}cd #{sexp[j][1]}"
+                          prompt_str_cd sexp[j][1]
+          when :cd_end;   prompt_str_cd_pop
           when :command;  lines.push "#{prompt_str}#{sexp[j][1]}"
           when :out;      lines.push sexp[j][1].strip
           when :out_begin;
             j += process_sexp_ellipsis lines, sexp, j
-          else; throw :done
+          else;
+            j -= 1 unless j == i
+            throw :done
           end
           j += 1
         end
