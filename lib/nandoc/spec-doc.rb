@@ -135,6 +135,10 @@ module NanDoc
         @test_case = test_case
       end
 
+      def note &block
+        push [:note, block]
+      end
+
       def report_recording_not_found meth_name
         "no recordings found for #{meth_name}"
       end
