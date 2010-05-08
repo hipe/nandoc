@@ -1,3 +1,9 @@
+<embed
+  style='position: absolute; right:0; top:0'
+  src="svg/less-fonts.svg" width="150" height="150"
+  type="image/svg+xml"
+  pluginspage="http://www.adobe.com/svg/viewer/install/" />
+
 # NanDoc
 this is a hack. this is nanDoc.
 
@@ -41,7 +47,7 @@ vanilla documentation that you've surely been writing all along.
 
 ## Installation
 
-(this is fragile and subject to change:)
+(this is fragile and very subject to change:)
     from the command line:
     ~~~
     ~/tmp > git clone git@github.com:hipe/nandoc.git
@@ -57,22 +63,48 @@ Start with  a markdown-formatted README file:
 
 (see: test.rb - "basic usage -- readme")
 
+<br />
 
 Then, next to this readme create a nanoc3 site project with
 nanDoc&reg;-powered&trade; nanoc&copy;:
 
 (see: test.rb - 'basic usage -- create site')
 
+<br />
+
 Finally, compile your site with the nanoc3 compile command:
 
 (see: test.rb - 'basic usage -- create site' - 'compile site')
 
+<br />
+
+From the command line start the nanoc3 (adsf) server:
+    from the command line:
+    ~~~
+    ~/tmp/my-site >nandoc view
+    ~/tmp/my-site >
+    ~~~
+
+<br />
 
 If all the bells are polished and whistles tuned, you will have a
 site as handsome, usable as self-unawarely-understatedly brilliant as this
-one, but stunningly and proudly your own.
+one, but stunningly and proudly your own:
 
-Genius never looked so stupid.
+(then point and aim your browsing devide to `http://localhost:3000/`)
+
+<div style='border: 1px solid gray; width: 800px; padding: 0 0 1em 0;'>
+  (see: test.rb - 'basic usage -- create site' - 'index page body')
+  <div class='clear'>&nbsp;</div>
+</div>
+
+<br/>
+
+This entire readme file/site showcases all of the currently exisiting site generation haxies available in nanDoc over nanoc3; and the example code and output you see above is generated from the unit tests in this project.
+
+Customizing your site is a matter of getting to know nanoc3 and discovering all the fantastic undocumented features hiding in nanDoc.
+
+NanDoc. Genius never looked so stupid&reg;.
 
 
 <span style='font-size: 10px'>appologies to william morgan's [trollop](http://trollop.rubyforge.org/) site, product, and person for unwittingly encouraging me, and providing the CSS styles for the code.</span>
