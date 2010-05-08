@@ -11,7 +11,8 @@
 PassThru = [
   {:dir=>'css', :ext=>'css'},
   {:dir=>'js',  :ext=>'js'},
-  {:dir=>'vendor', :ext=>'js'}
+  {:dir=>'vendor', :ext=>'js'}, # sucks
+  {:dir=>'svg', :ext=>'svg'}
 ]
 PassThru.each do |x|
   compile("/#{x[:dir]}/*/"){ } # don't filter or layout
