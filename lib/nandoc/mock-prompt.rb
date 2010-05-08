@@ -47,6 +47,10 @@ module NanDoc
       assert_equal_strings exp, @last_err, opts
     end
 
+    def note(*a,&b)
+      @record && @recordings.note(*a, &b)
+    end
+
     def out string, opts={}
       exp = reindent(string)
       @record && @recordings.add(:out, exp)
@@ -71,7 +75,7 @@ module NanDoc
 
     def record story_name=nil
       require File.dirname(__FILE__)+'/spec-doc.rb'
-      method = caller.first =~ /in `(.+)'\Z/ && $1 or fail("hack fail")
+      method = method_name_to_record(caller)
       @record = true
       @recordings = NanDoc::SpecDoc::Recordings.get @test_case
       @recordings.add(:method, method)
@@ -88,6 +92,13 @@ module NanDoc
     def assert_equal_strings exp, act, opts
       # @test_case.assert_equal exp, @last_out
       @test_case.assert_no_diff exp, act, nil, opts
+    end
+
+    # we used to use first method, now we use first test_ method
+    def method_name_to_record caller
+      line = caller.detect{ |x| x =~ /in `test_/ } or fail('hack fail')
+      method = line =~ /in `(.+)'\Z/ && $1 or fail("hack fail")
+      method
     end
 
     # this is different than the dozens of similar ones

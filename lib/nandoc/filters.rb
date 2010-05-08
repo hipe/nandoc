@@ -207,7 +207,10 @@ module NanDoc::Filters
       '~ > '
     end
 
+    public # avoid warnings
     attr_reader :prompt_str
+    private :prompt_str
+    private
 
     def render_block_fence md
       if ! RecognizedTags.include?(md[:tag_name])
@@ -241,9 +244,12 @@ module NanDoc::Filters
           node = sexp[idx]
           type = node.first
           case type
-          when :method; throw :done # stop at next story
           when :cd, :command
             idx += process_sexp_command sexp, idx
+          when :method
+            throw :done # stop at next story
+          when :note
+            process_sexp_note sexp, idx
           else
             fail("unexpected sexp node here: #{type.inspect} idx: #{idx}")
           end
@@ -285,7 +291,7 @@ module NanDoc::Filters
           when :cd_end;   prompt_str_cd_pop
           when :command;  lines.push "#{prompt_str}#{sexp[j][1]}"
           when :out;      lines.push sexp[j][1].strip
-          when :out_begin;
+          when :out_begin
             j += process_sexp_ellipsis lines, sexp, j
           else;
             j -= 1 unless j == i
@@ -298,6 +304,12 @@ module NanDoc::Filters
       render_terminal_div_highlighted raw_content
       ret = j-i
       ret
+    end
+
+    # @return [nil] adds the output raw to the blickle blackle
+    def process_sexp_note sexp, idx
+      chunk = sexp[idx][1].call
+      @chunks.push chunk
     end
 
     def render_terminal_div_highlighted content
