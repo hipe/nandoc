@@ -22,11 +22,12 @@ describe 'Basic' do
     basic_tree = {
       'README' => <<-HERE.gsub(/^ +/,'')
         # Hello
+
         ## Hi
         this is some stuff
         ruby:
         ~~~
-        this is some code
+        This::Is(:some => 'ruby'){ |x| x.code! }
         ~~~
       HERE
     }
@@ -39,11 +40,12 @@ describe 'Basic' do
       p.enter2 'cat README'
       p.out <<-HERE
         # Hello
+
         ## Hi
         this is some stuff
         ruby:
         ~~~
-        this is some code
+        This::Is(:some => 'ruby'){ |x| x.code! }
         ~~~
       HERE
     end
@@ -85,6 +87,16 @@ describe 'Basic' do
         HERE
         ), :ignoring => /\d\.\d\ds/ )
       end
+      weird_nokogiri_stuff(@pwd+'/my-site', p)
     end
+  end
+  def weird_nokogiri_stuff path, prompt
+    require 'nokogiri'
+    path = path + '/output/index.html'
+    doc = Nokogiri::HTML::Document.parse(File.read(path))
+    body_content = doc.xpath('//body').first.inner_html
+    assert_match(/this is some stuff/, body_content)
+    prompt.record 'index page body'
+    prompt.note{ body_content }
   end
 end
