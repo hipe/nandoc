@@ -72,11 +72,15 @@ a:hover {
 
 .sidebar h2 {
   /* moved to a class to make it more reusable */
+  margin-top:2em;
+}
+.sidebar h2.first {
+  margin-top: 0;
 }
 
 .sidebar ul {
   list-style-type: none;
-  margin: 20px 0;
+  /*margin: 20px 0;*/
 }
 
 .sidebar li {
@@ -135,6 +139,23 @@ clear: both;
 .debug-ging-outline {
 border: 1px solid orange;
 }
+div.footnotes{
+font-size:0.9em;
+}
+dl.faces{
+font-size: 14px;
+line-height: 1.3em;
+}
+dl.faces dt{
+clear: left;
+float: left;
+padding: 0 0.3em 0 0;
+text-align: right;
+width:9em;
+}
+dl.faces dd{
+text-align: left;
+}
 .nandoc-menu-lvl-1{
 float: left;
 position: relative;
@@ -162,6 +183,14 @@ margin: 0 0 0.4em 0;
 .main ul{
 margin: 0 0 0 1.0em;
 }
+p.answer:first-letter {
+font-size: 1.5em;
+font-weight: bold;
+}
+span.answer {
+font-size: 1.5em;
+font-weight: bold;
+}
 .sidebar ul.nested {
 margin: 0 0;
 }
@@ -177,4 +206,8 @@ padding: 18px 0 18px 0;
 .nandoc-topnav-2 {
 padding: 18px 0 18px 0;
 border: 1px solid black;
+}
+.sidebar .links{
+float: right;
+text-align: center;
 }
