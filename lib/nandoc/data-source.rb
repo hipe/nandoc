@@ -122,6 +122,24 @@ module NanDoc
     end
 
     #
+    # We don't seem to want any urls with uppercase characters in them
+    # because .. not sure.  But the rsync by default downcases our files.
+    # It's probably a good habbit to do this.  If we want to accept a variety
+    # of casing with our server that's ok but internally we should keep it consistent
+    # and simple.  (This causes gotchas sometimes when moving from a case-insensitive
+    # filesystem like that of OSX to a case-sensitive one like that of debian.)
+    # The titles of items, on the other hand ...
+    #
+    def identifier_normalize identifier
+      if /[A-Z]/ =~ identifier
+        use_identifier = identifier.downcase
+      else
+        use_identifier = identifier
+      end
+      use_identifier
+    end
+
+    #
     # more crazy hacks - normally content/foo/bar.html => "/foo/bar/" but
     # for this case we don't want to have stripped the containing folder,
     # *and* we try to hack it so that it's laid alongside content in
@@ -161,7 +179,8 @@ module NanDoc
           identifier = '/'
         end
       end
-      identifier
+      use_identifier = identifier_normalize(identifier)
+      use_identifier
     end
 
     #
