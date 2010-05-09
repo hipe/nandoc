@@ -1,6 +1,10 @@
 # NanDoc news
 
-## 0.0.1 (2010-99-99)
+## 0.0.0 (2010-99-99)
+
+* Sorry this is just a placeholder for now
+
+## 0.0.0 (2010-99-99)
 
 * Foobric Barbric bazbric
 
