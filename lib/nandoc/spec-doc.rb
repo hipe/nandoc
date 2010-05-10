@@ -9,17 +9,6 @@ module NanDoc
       def include_to mod
         MiniTest::SpecInstanceMethods.include_to mod
       end
-
-      #
-      # @return [Regexp] enhanced regex that parses a stack trace line
-      #
-      def parse_trace
-        @trace_parse ||= begin
-          re = /\A(.*):(\d+)(?::in `([^']+)')?\Z/
-          RegexpEnhance.names(re, :file, :line, :method)
-          re
-        end
-      end
     end
 
     def initialize gem_root
@@ -119,6 +108,7 @@ module NanDoc
       end
     end
   public
+    module ParseTrace; end
     class CodeSnippet
       # internally this does deferred parsing of the thing
 
@@ -135,25 +125,39 @@ module NanDoc
         last = method ? ":in `#{method}'" : ''
         "#{file}:#{line}#{tail}"
       end
-      def ruby_string
-        @ruby_string ||= begin
-          @stop_at or fail("no record_ruby_stop() found in method "<<
-          "after #{describe}")
-          @stop_at[:file] == @start_at[:file] or fail("I want life to be"<<
-          " simple. start and stop files must be the same: "<<
-          ([@stop_at, @start_at].map{ |x| File.basename(x)}*' and '))
+      def file_lines
+        @file_lines ||= begin
+          stop_at_assert    # not really appropriate here
+          same_file_assert  # not really appropriate here
           all_lines = File.open(@start_at[:file],'r').lines.map # sure why not
-          start, stop = [@start_at, @stop_at].map do |x|
-            /\A\d+\Z/=~ x[:line] or fail("not line: #{x[:line]}.inspect")
-            x[:line].to_i
-          end
-          # off by one twice, or something
-          these = all_lines[start..(stop-2)]
+          all_lines
+        end
+      end
+      def line_start
+        @start_at[:line]
+      end
+      def line_stop
+        @stop_at[:line]
+      end
+      # @todo maybe get rid of this.  we interpolate inspects elsewhere
+      def ruby_string_raw
+        @ruby_string_raw ||= begin
+          these = all_lines[line_start..(line_stop-2)]
           these.join('') # they have newlines already
         end
       end
       def stop_at data=nil
         data ? (@stop_at = data) : @stop_at
+      end
+    private
+      def same_file_assert
+        @stop_at[:file] == @start_at[:file] or fail("I want life to be"<<
+        " simple. start and stop files must be the same: "<<
+        ([@stop_at, @start_at].map{ |x| File.basename(x)}*' and '))
+      end
+      def stop_at_assert
+        stop_at or fail("no record_ruby_stop() found in method "<<
+        "after #{describe}")
       end
     end
     # this will move one day
@@ -175,12 +179,22 @@ module NanDoc
         end
       end
       class TestCaseAgent
+        include ParseTrace
         def initialize test_case
           @test_case = test_case
         end
+        def inspect mixed, exp_str = nil
+          act_str = mixed.inspect
+          line = caller.first
+          md = parse_trace_assert(line)
+          if exp_str
+            @test_case.assert_no_diff(exp_str, act_str, "at #{line}")
+          end
+          recordings.add(:inspect, act_str, md)
+        end
         def record_ruby
-          md = SpecDoc.parse_trace.match(caller.first) or fail("parse fail")
-          snip = CodeSnippet.new(md.to_hash)
+          md = parse_trace_assert(caller.first)
+          snip = CodeSnippet.new(md)
           recordings.add(:method, snip.method)
           recordings.add(:record_ruby, snip)
           @last_snip = snip
@@ -188,15 +202,35 @@ module NanDoc
         end
         def record_ruby_stop
           line = caller.first
-          md = SpecDoc.parse_trace.match(line) or fail("parse fail")
+          md = parse_trace_assert(caller.first)
           @last_snip or fail("no record_start in method before "<<
           "record_stop at #{line}")
-          @last_snip.stop_at md.to_hash
+          @last_snip.stop_at md
         end
       private
         def recordings
           Recordings.get(@test_case)
         end
+      end
+    end
+    module ParseTrace
+      #
+      # @return [Regexp] enhanced regex that parses a stack trace line
+      #
+      def parse_trace
+        @parse_trace_re ||= begin
+          re = /\A(.*):(\d+)(?::in `([^']+)')?\Z/
+          RegexpEnhance.names(re, :file, :line, :method)
+          re
+        end
+      end
+      def parse_trace_assert line
+        md = parse_trace.match(line) or
+          fail("couldn't parse trace line: #{line}")
+        h = md.to_hash
+        /\A\d+\Z/ =~ h[:line] or fail("not line: #{h[:line]}.inspect")
+        h[:line] = h[:line].to_i
+        h
       end
     end
     class Recordings < Array

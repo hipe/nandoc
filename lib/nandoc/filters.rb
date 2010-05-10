@@ -85,6 +85,10 @@ module NanDoc::Filters
       content
     end
 
+    def unindent_generic str
+      md = ReUnindent.match(str) or fail("no")
+      reindent_content(md)
+    end
   private
 
     RecognizedTags = ['ruby', 'from the command line']
@@ -100,12 +104,12 @@ module NanDoc::Filters
     ReSeeTest = /\(see: ((?:spec|test)[^\)]+)\)/
     NanDoc::RegexpEnhance.names(ReSeeTest, :content)
 
-    ReSnippet = /\A([ \t]*)(.*)\Z/m
-    NanDoc::RegexpEnhance.names(ReSnippet, :indent, :content)
-
     ReSeeTestParse =
       /\A((?:spec|test).*\.rb) ?(?:--?|\/) ?['"]([^'"]+)['"](.+)?\Z/
     NanDoc::RegexpEnhance.names(ReSeeTestParse, :testfile, :testname, :xtra)
+
+    ReUnindent = /\A([ \t]*)(.*)\Z/m
+    NanDoc::RegexpEnhance.names(ReUnindent, :indent, :content)
 
     def initialize(*a)
       super(*a)
@@ -270,10 +274,10 @@ module NanDoc::Filters
             idx += process_sexp_command sexp, idx
           when :method
             throw :done # stop at next story
-          when :record_ruby
-            process_sexp_record_ruby sexp, idx
           when :note
             process_sexp_note sexp, idx
+          when :record_ruby
+            idx += ProcessSnippet.new(self, sexp, idx).process
           else
             fail("unexpected sexp node here: #{type.inspect} idx: #{idx}")
           end
@@ -294,6 +298,7 @@ module NanDoc::Filters
       pre_block = "\n<pre class='ruby'>\n#{hilited}\n</pre>\n"
       @chunks.push pre_block
     end
+    public :render_block_fence_ruby # visitors
 
     def render_command_div content
       fake_command = "#{prompt_str}#{content}"
@@ -337,16 +342,6 @@ module NanDoc::Filters
       @chunks.push chunk
     end
 
-    # for now we treat it exactly the content of a block fence. Seems
-    # reasonable.  (except let's lopp off that trailing newline)
-    def process_sexp_record_ruby sexp, idx
-      snip = sexp[idx][1]
-      ruby = snip.ruby_string
-      md = ReSnippet.match(ruby) or fail("oops: #{ruby}")
-      md[:content].replace md[:content].strip
-      render_block_fence_ruby md
-    end
-
     def render_terminal_div_highlighted content
       lines = ['<pre class="terminal">']
       lines.concat lines_highlighted(content)
@@ -372,6 +367,11 @@ module NanDoc::Filters
       re = /^#{Regexp.new(indent)}/
       unindented_content = raw_content.gsub(re, '')
       unindented_content
+    end
+
+    # ignoring multiline crap for now
+    def ruby_snippet_inspect inspect
+      "\n#=> #{inspect}"
     end
 
     def with_each_tag_in content, regexp, &block
@@ -459,6 +459,63 @@ module NanDoc::Filters
         end
         html = parts*''
         html
+      end
+    end
+
+    class ProcessSnippet
+
+      def initialize filter, sexp, idx
+        @prefix = '# => '
+        sexp[idx].first == :record_ruby or fail("must be record_ruby")
+        @filter, @sexp, @idx = filter, sexp, idx
+      end
+      ReInspect =  /\A([ \t]*)(?:nandoc\.inspect[ \t]*)(.+)\Z/
+      NanDoc::RegexpEnhance.names(ReInspect, :indent, :var)
+      ReHere = /\A(.*)(?:, ?<<-([A-Z]+))/
+      NanDoc::RegexpEnhance.names(ReHere, :keep, :here)
+
+      def process
+        j = @idx
+        snip = @sexp[j][1]
+        @lines = snip.file_lines.dup # we will be changing values
+        @inspects = []
+        while @sexp[j+1] && @sexp[j+1].first == :inspect
+          j += 1
+          @inspects.push @sexp[j]
+        end
+        inspects_interpolate if @inspects.any?
+        unindented_lines = @lines[snip.line_start..snip.line_stop-2]
+        fake_unindented_ruby = unindented_lines.compact.join('')
+        indent = /\A([ \t]*)/ =~ fake_unindented_ruby && $1
+        fake_md = {:indent => indent, :content => fake_unindented_ruby}
+        @filter.render_block_fence_ruby(fake_md)
+        advance_by = j - @idx
+        advance_by
+      end
+    private
+      def erase_to_here offset, here
+        re = /\A[ \t]*#{Regexp.escape(here)}\Z/
+        found = (offset+1..@lines.length-1).detect{|idx| @lines[idx] =~ re }
+        found or fail("heredoc hack failed. no #{re} found.")
+        (offset+1..found).each{ |idx| @lines[idx] = nil }
+        nil
+      end
+      def inspects_interpolate
+        @inspects.each do |ins|
+          offset = ins[2][:line]-1
+          act = @lines[offset]
+          md = ReInspect.match(act) or fail("hack fail near #{act.inspect}")
+          md = md.to_hash
+          if md2 = ReHere.match(md[:var])
+            md[:var] = md2[:keep]
+            erase_to_here offset, md2[:here]
+          end
+          use_this = (
+            "#{md[:indent]}#{md[:var]}\n"<<
+            "#{md[:indent]}#{@prefix}#{ins[1]}"
+          )
+          @lines[offset] = use_this
+        end
       end
     end
   end
