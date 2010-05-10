@@ -7,11 +7,11 @@ me = "\e[35mnandoc\e[0m "
 require 'jeweler'
 Jeweler::Tasks.new do |s|
   s.authors = ['Chip Malice']
-  s.description = NanDoc::ParseReadme.description('README')  
+  s.description = NanDoc::ParseReadme.description('README')
   s.email = 'chip.malice@gmail.com'
-  s.executables = ['nandoc']  
-  s.files =  FileList['[A-Z]*(?:\.md)?', '{bin,doc,lib,test}/**/*']  
-  s.homepage = 'http://nandoc.hipeland.org'  
+  s.executables = ['nandoc']
+  s.files =  FileList['[A-Z]*(?:\.md)?', '{bin,doc,lib,test}/**/*']
+  s.homepage = 'http://nandoc.hipeland.org'
   s.name = 'nandoc'
   s.rubyforge_project = 'nandoc'
   s.summary = NanDoc::ParseReadme.summary('README')
