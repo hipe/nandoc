@@ -13,7 +13,7 @@ me = File.dirname(__FILE__)+'/nandoc'
 
 # order is important:
 require me + '/support-modules.rb'
-require me + '/treebis/lib/treebis.rb'
+require 'treebis' # gem
 require me + '/config.rb'
 
 module NanDoc
