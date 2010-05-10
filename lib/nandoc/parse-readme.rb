@@ -1,5 +1,21 @@
 module NanDoc
   class ParseReadme
+    #
+    # If you are really really crazy then you don't like
+    # repeating yourself between your gemspec and your README with regard to
+    # the project summary and description.
+    #
+    # This is a quick and dirty hack to parse your README (or similary
+    # formatted file) in a really rough way for when you are building your
+    # gemspec -- it doesn't use a markdown parser or whatever.  It scans the
+    # README file for a line like "## Summary" and reads the next line with
+    # content after it. (ditto "## Description" etc.)
+    #
+    # See the Rakefile of this project for example usage.
+    #
+    # @see note below near 'jeweler'
+    #
+
     def initialize(path=nil, &block)
       @parsed_content = {}
       @lines = nil
@@ -42,19 +58,37 @@ module NanDoc
       @lines = File.open(@path).lines.map
     end
     class DeferredParse
-      # this whole thing is a ridiculously fragile and secret hack
-      # that is pointless @todo
+      #
+      # This whole thing is a ridiculously fragile and secret hack
+      # that is maybe pointless @todo
+      # The point is to defer opening and parsing the README file unless
+      # necessary.  (But it didn't work as intended, but no big deal.)
+      #
+      # If you use it is is recommended that you use jeweler and the
+      # gemspec:debug task to check its work.
+      #
+
       @files = {}
       class << self
         attr_reader :files
       end
       def initialize path, section
         @path, @section = path, section
+        @as_string = nil
       end
       def strip
-        parse = (self.class.files[@path] ||= ParseReadme.new(@path))
-        parse.parse_section(@section) unless parse.respond_to?(@section)
-        parse.send(@section)
+        as_string.strip
+      end
+      def to_s
+        as_string # can't simply alias it b/c it is private
+      end
+    private
+      def as_string
+        @as_string ||= begin
+          parse = (self.class.files[@path] ||= ParseReadme.new(@path))
+          parse.parse_section(@section) unless parse.respond_to?(@section)
+          parse.send(@section)
+        end
       end
     end
   end
