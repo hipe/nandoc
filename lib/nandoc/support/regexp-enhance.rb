@@ -52,7 +52,7 @@ module NanDoc
       end
       def match_data_enhanced_init re
         @names = re.names
-        class << self
+        class << self # @todo see if this doesn't break by moving defs out
           alias_method :fetch_orig, :[]
           attr_reader :names
           def [](mixed)
@@ -63,6 +63,13 @@ module NanDoc
             fetch_orig offset
           end
         end
+      end
+
+      #
+      # @return [Hash] of the named captures in the MatchData
+      #
+      def to_hash
+        Hash[ names.map{ |n| [n, self[n] ] } ]
       end
     end
   end
