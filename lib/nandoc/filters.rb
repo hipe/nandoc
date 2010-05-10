@@ -100,6 +100,9 @@ module NanDoc::Filters
     ReSeeTest = /\(see: ((?:spec|test)[^\)]+)\)/
     NanDoc::RegexpEnhance.names(ReSeeTest, :content)
 
+    ReSnippet = /\A([ \t]*)(.*)\Z/m
+    NanDoc::RegexpEnhance.names(ReSnippet, :indent, :content)
+
     ReSeeTestParse =
       /\A((?:spec|test).*\.rb) ?(?:--?|\/) ?['"]([^'"]+)['"](.+)?\Z/
     NanDoc::RegexpEnhance.names(ReSeeTestParse, :testfile, :testname, :xtra)
@@ -130,8 +133,27 @@ module NanDoc::Filters
     def converter_specdoc
       @converter_specdoc ||= begin
         require File.dirname(__FILE__)+'/spec-doc.rb'
-        NanDoc::SpecDoc.new(NanDoc::Root)
+        NanDoc::SpecDoc.new(current_project_root_hack)
       end
+    end
+
+    #
+    # @todo this sucks.  i didn't have time to think about how this should
+    # work when i wrote it.  The problem is, given that we are a nanoc
+    # project, how do we know where live the tests we are spec-docing?
+    #
+    # For now we assume that the mysite folder is one level inside the root
+    # of the (gem-like) project folder and we assert that the assumed root
+    # looks right but this will be broken in the likely event that the nanoc
+    # project will live elsewhere relative to the gem-like root.
+    #
+    def current_project_root_hack
+      presumed_root = File.dirname(FileUtils.pwd)
+      thems = %w(spec test)
+      found = thems.detect{ |dir| File.directory?(presumed_root+'/'+dir) }
+      fail("couldn't find " << oxford_comma(thems,' or ', &quoted) <<
+        "in #{presumed_root}") unless found
+      presumed_root
     end
 
     def ellipsis_default
@@ -248,6 +270,8 @@ module NanDoc::Filters
             idx += process_sexp_command sexp, idx
           when :method
             throw :done # stop at next story
+          when :record_ruby
+            process_sexp_record_ruby sexp, idx
           when :note
             process_sexp_note sexp, idx
           else
@@ -265,7 +289,8 @@ module NanDoc::Filters
 
     def render_block_fence_ruby md
       content = reindent_content md
-      hilited = converter_ruby.convert(content, false)
+      content2 = content.strip # i think
+      hilited = converter_ruby.convert(content2, false)
       pre_block = "\n<pre class='ruby'>\n#{hilited}\n</pre>\n"
       @chunks.push pre_block
     end
@@ -310,6 +335,16 @@ module NanDoc::Filters
     def process_sexp_note sexp, idx
       chunk = sexp[idx][1].call
       @chunks.push chunk
+    end
+
+    # for now we treat it exactly the content of a block fence. Seems
+    # reasonable.  (except let's lopp off that trailing newline)
+    def process_sexp_record_ruby sexp, idx
+      snip = sexp[idx][1]
+      ruby = snip.ruby_string
+      md = ReSnippet.match(ruby) or fail("oops: #{ruby}")
+      md[:content].replace md[:content].strip
+      render_block_fence_ruby md
     end
 
     def render_terminal_div_highlighted content

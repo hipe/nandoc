@@ -5,6 +5,23 @@ require 'minitest/spec'
 module NanDoc
   class SpecDoc
 
+    class << self
+      def include_to mod
+        MiniTest::SpecInstanceMethods.include_to mod
+      end
+
+      #
+      # @return [Regexp] enhanced regex that parses a stack trace line
+      #
+      def parse_trace
+        @trace_parse ||= begin
+          re = /\A(.*):(\d+)(?::in `([^']+)')?\Z/
+          RegexpEnhance.names(re, :file, :line, :method)
+          re
+        end
+      end
+    end
+
     def initialize gem_root
       @gem_root = gem_root
       @setup = false
@@ -20,7 +37,7 @@ module NanDoc
         load_file testfile
         test_case, meth_name = find_test testname
         unambig_re = /\A#{Regexp.escape(meth_name)}\Z/
-        runner = MiniTest::Unit.new
+        runner = ::MiniTest::Unit.new
         runner.instance_variable_set('@verbose', true)
         test_count, ass_count = runner.run_test_suites unambig_re
         fail("didn't run any tests for #{unambig_re.source}") unless
@@ -45,7 +62,7 @@ module NanDoc
       filter =  /\Atest_\d{4}_#{meth_tail}\Z/
       found_meths = []
       found_pairs = []
-      MiniTest::Unit::TestCase.test_suites.each do |suite|
+      ::MiniTest::Unit::TestCase.test_suites.each do |suite|
         if (foundfound = suite.test_methods.grep(filter)).any?
           found_pairs.push [suite, foundfound]
           found_meths.concat foundfound
@@ -80,9 +97,9 @@ module NanDoc
     def setup
       return if @setup
       @testout = StringIO.new
-      MiniTest::Unit.output = @testout
+      ::MiniTest::Unit.output = @testout
         # this is set but ignored which is ok. it gets method names and dots
-      sing = class << MiniTest::Unit; self end
+      sing = class << ::MiniTest::Unit; self end
       sing.send(:define_method, :autorun){ } # override it to do nothing!!
       @setup = true
     end
@@ -102,6 +119,86 @@ module NanDoc
       end
     end
   public
+    class CodeSnippet
+      # internally this does deferred parsing of the thing
+
+      def initialize matches_hash
+        @start_at = matches_hash
+        @stop_at = nil
+      end
+      attr_reader :start_at
+      %w(method line file).each do |meth|
+        sym = meth.to_sym
+        define_method(meth){ || @start_at[sym] }
+      end
+      def describe
+        last = method ? ":in `#{method}'" : ''
+        "#{file}:#{line}#{tail}"
+      end
+      def ruby_string
+        @ruby_string ||= begin
+          @stop_at or fail("no record_ruby_stop() found in method "<<
+          "after #{describe}")
+          @stop_at[:file] == @start_at[:file] or fail("I want life to be"<<
+          " simple. start and stop files must be the same: "<<
+          ([@stop_at, @start_at].map{ |x| File.basename(x)}*' and '))
+          all_lines = File.open(@start_at[:file],'r').lines.map # sure why not
+          start, stop = [@start_at, @stop_at].map do |x|
+            /\A\d+\Z/=~ x[:line] or fail("not line: #{x[:line]}.inspect")
+            x[:line].to_i
+          end
+          # off by one twice, or something
+          these = all_lines[start..(stop-2)]
+          these.join('') # they have newlines already
+        end
+      end
+      def stop_at data=nil
+        data ? (@stop_at = data) : @stop_at
+      end
+    end
+    # this will move one day
+    module MiniTest
+      module SpecInstanceMethods
+        class << self
+          def include_to mod
+            unless mod.ancestors.include?(::MiniTest::Spec)
+              fail(
+               "Sorry, for now SpecDoc can only extend MiniTest::Spec "<<
+               " tests.  Couldn't extend #{mod}."
+              )
+            end
+            mod.send(:include, self)
+          end
+        end
+        def nandoc
+          @nandoc_agent ||= TestCaseAgent.new(self)
+        end
+      end
+      class TestCaseAgent
+        def initialize test_case
+          @test_case = test_case
+        end
+        def record_ruby
+          md = SpecDoc.parse_trace.match(caller.first) or fail("parse fail")
+          snip = CodeSnippet.new(md.to_hash)
+          recordings.add(:method, snip.method)
+          recordings.add(:record_ruby, snip)
+          @last_snip = snip
+          nil
+        end
+        def record_ruby_stop
+          line = caller.first
+          md = SpecDoc.parse_trace.match(line) or fail("parse fail")
+          @last_snip or fail("no record_start in method before "<<
+          "record_stop at #{line}")
+          @last_snip.stop_at md.to_hash
+        end
+      private
+        def recordings
+          Recordings.get(@test_case)
+        end
+      end
+    end
     class Recordings < Array
       @for_test_case = {}
 
