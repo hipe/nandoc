@@ -1,27 +1,24 @@
-require 'rake/gempackagetask.rb'
 require File.expand_path('../lib/nandoc/parse-readme.rb', __FILE__)
 
 task :default => :test
 
-spec = Gem::Specification.new do |s|
-  s.name = "nandoc"
-  s.version = '0.0.0'
-  s.date = Time.now.to_s
-  s.email = "chip.malice@gmail.com"
-  s.authors = ["Chip Malice"]
+me = "\e[35mnandoc\e[0m "
+
+require 'jeweler'
+Jeweler::Tasks.new do |s|
+  s.authors = ['Chip Malice']
+  s.description = NanDoc::ParseReadme.description('README')  
+  s.email = 'chip.malice@gmail.com'
+  s.executables = ['nandoc']  
+  s.files =  FileList['[A-Z]*(?:\.md)?', '{bin,doc,lib,test}/**/*']  
+  s.homepage = 'http://nandoc.hipeland.org'  
+  s.name = 'nandoc'
+  s.rubyforge_project = 'nandoc'
   s.summary = NanDoc::ParseReadme.summary('README')
-  # s.homepage = "http://nandoc.rubyforge.org"
-  s.files = %w(
-    lib/nandoc.rb
-    ) + Dir["*.md"]
-  s.executables = ['nandoc']
-  s.description = NanDoc::ParseReadme.description('README')
-  # s.rubyforge_project = "nandoc"
 end
 
-Rake::GemPackageTask.new(spec){ }
 
-desc "hack turns the installed gem into a symlink to this directory"
+desc "#{me}hack turns the installed gem into a symlink to this directory"
 task :hack do
   kill_path = %x{gem which nandoc}
   kill_path = File.dirname(File.dirname(kill_path))
@@ -31,17 +28,17 @@ task :hack do
   FileUtils.ln_s(this_path, kill_path, :verbose => 1)
 end
 
-desc "generate rcov coverage"
+desc "#{me}generate rcov coverage"
 task :rcov do
   sh %!rcov --exclude '.*gem.*' test/test.rb -- --seed 0!
 end
 
-desc "run the test file"
+desc "#{me}run the test file"
 task :test do
   sh %!ruby -w -e 'require "test/test.rb"'!
 end
 
-desc "remove temporary, generated files like coverage"
+desc "#{me}remove temporary, generated files like coverage"
 task :prune do
   require File.dirname(__FILE__)+'/lib/nandoc.rb'
   file_utils = NanDoc::Config.file_utils
