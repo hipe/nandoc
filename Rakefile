@@ -15,6 +15,10 @@ Jeweler::Tasks.new do |s|
   s.name = 'nandoc'
   s.rubyforge_project = 'nandoc'
   s.summary = NanDoc::ParseReadme.summary('README')
+
+  s.add_dependency 'nanoc3', '>= 1.3.6'
+  s.add_dependency 'treebis'
+  s.add_dependency 'syntax' # for highlighting ruby
 end
 
 
@@ -38,12 +42,12 @@ task :test do
   sh %!ruby -w -e 'require "test/test.rb"'!
 end
 
-desc "#{me}remove temporary, generated files like coverage"
-task :prune do
-  require File.dirname(__FILE__)+'/lib/nandoc.rb'
-  file_utils = NanDoc::Config.file_utils
-  these = ['./lib/nandoc/treebis/coverage']
-  these.each do |this|
-    file_utils.remove_entry_secure(this, :verbose=>true)
-  end
-end
+# desc "#{me}remove temporary, generated files like coverage"
+# task :prune do
+#   require File.dirname(__FILE__)+'/lib/nandoc.rb'
+#   file_utils = NanDoc::Config.file_utils
+#   these = ['./lib/nandoc/treebis/coverage']
+#   these.each do |this|
+#     file_utils.remove_entry_secure(this, :verbose=>true)
+#   end
+# end
