@@ -1,3 +1,8 @@
+# this kind of sucks but for a wicked hack to work with symlinks
+# we have to wrap this sucker.
+
+unless Object.const_defined?('NanDoc')
+
 require 'nanoc3'
 require 'nanoc3/cli'
 
@@ -31,7 +36,6 @@ require me + '/data-source.rb'
 require me + '/filters.rb'
 require me + '/helpers.rb'
 require me + '/item-class-hacks.rb'
-require me + '/mock-prompt.rb'
 
 Nanoc3::DataSource.register ::NanDoc::DataSource, :nandoc
 Nanoc3::Filter.register ::NanDoc::Filters::General, :nandoc
@@ -40,3 +44,5 @@ shared_base = Nanoc3::CLI::Base.shared_base
 shared_base.remove_command Nanoc3::CLI::Commands::CreateSite
 shared_base.add_command    NanDoc::CreateNanDocSite.new
 shared_base.add_command    NanDoc::Commands::Diff.new
+
+end

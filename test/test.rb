@@ -1,5 +1,5 @@
 require 'minitest/spec'
-require File.expand_path('../../lib/nandoc.rb', __FILE__)
+require 'nandoc/spec-doc/mock-prompt'
 
 MiniTest::Unit.autorun
 

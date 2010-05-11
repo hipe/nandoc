@@ -1,3 +1,5 @@
+require 'stringio'
+
 ##
 # turn the output of Diff::LCS.diff into a string similar
 # to what would be retured by `diff`, optionally make it looks

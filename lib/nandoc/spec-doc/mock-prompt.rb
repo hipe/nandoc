@@ -1,4 +1,11 @@
-require File.dirname(__FILE__)+'/test/minitest-extlib.rb'
+# @todo figure out how to get the symlink hack to work and avoid
+#   this nonsense all the while letting this be a valid requireable file
+require(File.expand_path('../../../nandoc.rb',__FILE__)) unless
+  Object.const_defined?('NanDoc')
+require(File.expand_path('../../spec-doc.rb',__FILE__)) unless
+  NanDoc.const_defined?('SpecDoc')
+require(File.dirname(__FILE__)+'/mini-test.rb') unless
+  NanDoc::SpecDoc.const_defined?('MiniTest')
 
 module NanDoc
   class MockPrompt
@@ -74,7 +81,6 @@ module NanDoc
     end
 
     def record story_name=nil
-      require File.dirname(__FILE__)+'/spec-doc.rb'
       method = method_name_to_record(caller)
       @record = true
       @recordings = NanDoc::SpecDoc::Recordings.get @test_case

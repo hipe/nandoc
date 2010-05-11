@@ -137,7 +137,8 @@ module NanDoc::Filters
     def converter_specdoc
       @converter_specdoc ||= begin
         require File.dirname(__FILE__)+'/spec-doc.rb'
-        NanDoc::SpecDoc.new(current_project_root_hack)
+        NanDoc::SpecDoc::
+          TestFrameworkDispatcher.new(current_project_root_hack)
       end
     end
 
