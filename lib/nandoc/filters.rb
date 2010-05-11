@@ -117,7 +117,7 @@ module NanDoc::Filters
     end
 
     def advance_to_story sexp, md, idx
-      story = md[:xtra] =~ /\A *[-\/] *['"](.+)['"]\Z/ && $1 or
+      story = md[:xtra] =~ /\A *(?:--?|\/) *['"](.+)['"]\Z/ && $1 or
         fail("couldn't parse out story name from #{md[:xtra].inspect}"<<
         "expecting for e.g  \" - 'blah blah'\"")
       idx = sexp.index{|x| x.first == :story && x[1] == story } or
@@ -134,8 +134,8 @@ module NanDoc::Filters
       end
     end
 
-    def converter_specdoc
-      @converter_specdoc ||= begin
+    def sexp_getter
+      @sexp_getter ||= begin
         require File.dirname(__FILE__)+'/spec-doc.rb'
         NanDoc::SpecDoc::
           TestFrameworkDispatcher.new(current_project_root_hack)
@@ -258,8 +258,10 @@ module NanDoc::Filters
         fail("couldn't parse see_test string: #{md[:content].inspect} -- "<<
          'string must look like: \'(see: test_file.rb/"some test name")\''
         )
-      specdoc = converter_specdoc
-      sexp = specdoc.get_sexp md2[:testfile], md2[:testname]
+      getter = sexp_getter
+      sexp = getter.get_sexp md2[:testfile], md2[:testname]
+      sexp.first.first == :method or fail("i'm done with this kind of sexp")
+      methname = sexp.first[1]
       idx = 0
       last = sexp.length - 1
       if md2[:xtra]
@@ -274,11 +276,18 @@ module NanDoc::Filters
           when :cd, :command
             idx += process_sexp_command sexp, idx
           when :method
-            throw :done # stop at next story
+            if node[1] != methname
+              fail("i don't like this kind of sexp anymore -- "<<
+                "#{methname.inspect} != #{node[1].inspect}"
+              )
+            end
           when :note
             process_sexp_note sexp, idx
           when :record_ruby
             idx += ProcessSnippet.new(self, sexp, idx).process
+          when :story
+            # always stop at next story?
+            throw :done
           else
             fail("unexpected sexp node here: #{type.inspect} idx: #{idx}")
           end

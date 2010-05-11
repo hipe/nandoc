@@ -1,24 +1,36 @@
 module NanDoc::SpecDoc
   class TestFrameworkProxy
-    # abstract baseclass, an agent that runs tests  
+    # abstract baseclass, an agent that runs tests
 
     def initialize gem_root
       @gem_root = gem_root
     end
-    
+
     def get_sexp testfile, testname
+      TestFrameworkProxy.sexp_cache[testfile][testname] ||= begin
+        build_sexp testfile, testname
+      end
+    end
+
+    def build_sexp testfile, testname
       load_file testfile
       test_case, meth_name = find_test testname
       run_test_case_method testfile, testname, test_case, meth_name
       recs = ::NanDoc::SpecDoc::Recordings.for_test_case[test_case] or
-        fail(::NanDoc::SpecDoc::
-          Recordings.report_test_case_not_found(test_case))
+        fail(::NanDoc::SpecDoc::Recordings.
+                               report_test_case_not_found(test_case))
       sexp = recs.get_first_sexp_for_test_method(meth_name) or
         fail recs.report_recording_not_found(meth_name)
-      sexp        
+      sexp
     end
+
+    @sexp_cache = Hash.new{ |h,k| h[k] = {} }
+    class << self
+      attr_reader :sexp_cache
+    end
+
   protected
-  
+
     #
     # the stream to write to when things like a specdoc test run fails
     #
@@ -35,7 +47,7 @@ module NanDoc::SpecDoc
       err.puts "Please get your tests green and re-run."
       exit(1);
     end
-    
+
     def load_file testfile
       path = testdir + '/' + testfile
       fail("test file not found: #{path.inspect}") unless File.file?(path)
@@ -50,7 +62,7 @@ module NanDoc::SpecDoc
       @testout.rewind
       @testout.read
     end
-    
+
     #
     # default way to deduce the root directory that holds the tests
     #

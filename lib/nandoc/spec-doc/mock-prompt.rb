@@ -12,9 +12,12 @@ module NanDoc
     #
     # This is a bit of a misnomer.  it's actually just a wrapper
     # around the real shell.  It's for testing.  SpecDoc.
+    # @todo - Move this class to under SpecDoc
     #
 
     include Treebis::Sopen2
+    include SpecDoc::AgentInstanceMethods
+
 
     def initialize test_case=nil
       @last_both = @last_out = @last_err = nil
@@ -83,7 +86,7 @@ module NanDoc
     def record story_name=nil
       method = method_name_to_record(caller)
       @record = true
-      @recordings = NanDoc::SpecDoc::Recordings.get @test_case
+      recordings
       @recordings.add(:method, method)
       @recordings.add(:story, story_name) if story_name
     end
@@ -100,13 +103,6 @@ module NanDoc
       @test_case.assert_no_diff exp, act, nil, opts
     end
 
-    # we used to use first method, now we use first test_ method
-    def method_name_to_record caller
-      line = caller.detect{ |x| x =~ /in `test_/ } or fail('hack fail')
-      method = line =~ /in `(.+)'\Z/ && $1 or fail("hack fail")
-      method
-    end
-
     # this is different than the dozens of similar ones
     def reindent str
       these = str.scan(/^[\t ]*/).each.with_index.map
@@ -119,5 +115,7 @@ module NanDoc
       re = /^#{Regexp.escape(string)}/
       str.gsub(re, '')
     end
+
+    attr_reader :test_case
   end
 end

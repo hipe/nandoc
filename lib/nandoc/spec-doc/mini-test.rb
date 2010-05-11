@@ -2,17 +2,17 @@ require 'stringio'
 require File.expand_path('../../test/minitest-extlib.rb', __FILE__)
 
 module NanDoc::SpecDoc::MiniTest
-  class Proxy < ::NanDoc::SpecDoc::TestFrameworkProxy    
+  class Proxy < ::NanDoc::SpecDoc::TestFrameworkProxy
 
     def initialize(*a)
       super(*a)
       @hacked_minitest = false
     end
 
-  private 
-  
+  private
+
     #
-    # given 
+    # given
     # @param [String] the natural sounding string name as it appears in
     #   documentation,
     # @return [Array] a pair of strings: suite name and method name
@@ -39,12 +39,12 @@ module NanDoc::SpecDoc::MiniTest
         fail("found more than one test matching the pattern for \"#{str}\""<<
         " -- (#{found_meths.join(', ')})")
       end
-    end    
-    
+    end
+
     #
-    # do whatever you have to do to prepare minitest to run nandoc-enabled 
+    # do whatever you have to do to prepare minitest to run nandoc-enabled
     # tests
-    # 
+    #
     def hack_minitest
       return if @hacked_minitest
       @testout = StringIO.new
@@ -54,15 +54,15 @@ module NanDoc::SpecDoc::MiniTest
       sing.send(:define_method, :autorun){ } # override it to do nothing!!
       @hacked_minitest = true
     end
-    
+
     #
     # given
     # @param [String] testfile name (just semantic not formal)
-    # @param [String] testname (just semantic not formal)    
+    # @param [String] testname (just semantic not formal)
     # @param [String] a test case name and
-    # @param [String] a method name, 
+    # @param [String] a method name,
     # run the test in question which will hopefully write to the recordings
-    # experimentally 
+    # experimentally
     # @return an exit status of 0 if everything's ok
     #
     def run_test_case_method testfile, testname, test_case, meth_name

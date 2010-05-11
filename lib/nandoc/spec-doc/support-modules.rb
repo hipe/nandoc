@@ -1,5 +1,29 @@
 module NanDoc
   module SpecDoc
+    module AgentInstanceMethods
+      # share things between MockPrompt and TestCaseAgent
+
+      # we used to use first method, now we use first test_ method
+      def method_name_to_record caller
+        line = caller.detect{ |x| x =~ /in `test_/ } or fail('hack fail')
+        method = line =~ /in `(.+)'\Z/ && $1 or fail("hack fail")
+        method
+      end
+
+      def recordings
+        @recordings ||=  NanDoc::SpecDoc::Recordings.get(test_case)
+      end
+
+      def story story_name
+        method = method_name_to_record(caller)
+        rec = recordings
+        rec.add(:method, method)
+        rec.add(:story, story_name)
+        nil
+      end
+
+    end
+
     class CodeSnippet
       #
       # internally this does deferred parsing of the thing
@@ -10,6 +34,7 @@ module NanDoc
       def initialize matches_hash
         @start_at = matches_hash
         @stop_at = nil
+        @lines_proc = nil
       end
       attr_reader :start_at
       %w(method line file).each do |meth|
@@ -20,13 +45,15 @@ module NanDoc
         last = method ? ":in `#{method}'" : ''
         "#{file}:#{line}#{tail}"
       end
+      # just hide all the lines from dumps to make irb debugging prettier
       def file_lines
-        @file_lines ||= begin
+        @lines_proc ||= begin
           stop_at_assert    # not really appropriate here
           same_file_assert  # not really appropriate here
           all_lines = File.open(@start_at[:file],'r').lines.map # sure why not
-          all_lines
+          proc{ all_lines }
         end
+        @lines_proc.call
       end
       def line_start
         @start_at[:line]
@@ -76,15 +103,15 @@ module NanDoc
         h
       end
     end
-    
+
 
     class Recordings < Array
       #
       # everything that nandoc does during test runs gets written
       # to one of these.  It's like a Sexp structure.
       #
-      
-      
+
+
       @for_test_case = {}
 
       class << self
