@@ -2,15 +2,11 @@
 _(rougly in order of priority)_
 
 ## Todo's
-* pull out Treebis into own gem
-* add explicit dependency on syntax (highligting gem)
-* add explicit dependency on version of nanoc3 or deal with patching etc.
+* document DocSpec and MockPrompt!!
+* document the tags in the filter (satisfied partly by below & above)
 * integrate yard api doc generation
-* document the tags in the filter (satisfied partly by above)
-* document recommendations on publishing
 * add explicit dependency on minitest (or not)
 * document diffing commands
-
 
 ## Bugs
 * live [here](http://github.com/hipe/nandoc/issues)
