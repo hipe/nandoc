@@ -462,7 +462,33 @@ module NanDoc::Filters
       end
     end
 
+    module HackHelpers
+      # stand-in for ruby-2-ruby
+      #
+
+      def leading_indent str
+        /\A([ \t]*)/ =~ str && $1
+      end
+      def re_for_line_with_same_indent_as str
+        ind = leading_indent(str)
+        re = /\A#{Regexp.escape(ind)}(?=[^ \t])/
+        re
+      end
+      def re_for_unindent_gsub indent
+        re = /\A#{Regexp.escape(indent)}/
+        re
+      end
+      def string_diff_assert long, short
+        idx = long.index(short) or fail("short not found in long -- "<<
+        "#{short.inspect} in #{long.inspect}")
+        head = long[0,idx] # usu. ''
+        tail = long[idx + short.length..-1]
+        head + tail
+      end
+    end
+
     class ProcessSnippet
+      include HackHelpers
 
       def initialize filter, sexp, idx
         @prefix = '# => '
@@ -471,15 +497,20 @@ module NanDoc::Filters
       end
       ReInspect =  /\A([ \t]*)(?:nandoc\.inspect[ \t]*)(.+)\Z/
       NanDoc::RegexpEnhance.names(ReInspect, :indent, :var)
+      ReOut     = /\A[ \t]*nandoc\.out\([ \t]*<<-'?([A-Z]+)/
+      ReUntilDo = /\A[ \t]*\)[ \t]*do[ \t]*\Z/
+
       ReHere = /\A(.*)(?:, ?<<-([A-Z]+))/
       NanDoc::RegexpEnhance.names(ReHere, :keep, :here)
+
+      ConsumeThese = [:inspect, :out]
 
       def process
         j = @idx
         snip = @sexp[j][1]
         @lines = snip.file_lines.dup # we will be changing values
         @inspects = []
-        while @sexp[j+1] && @sexp[j+1].first == :inspect
+        while @sexp[j+1] && ConsumeThese.include?(@sexp[j+1].first)
           j += 1
           @inspects.push @sexp[j]
         end
@@ -500,22 +531,86 @@ module NanDoc::Filters
         (offset+1..found).each{ |idx| @lines[idx] = nil }
         nil
       end
+
+      # whether with a nandoc.out or nandoc.inspect, keeping the indentation
+      # that's in the sourcefile, substitute real code for pretty code,
+      # without changing the offsets of the lines.  fragile hack.
+      # @todo ruby2ruby?
+      #
       def inspects_interpolate
         @inspects.each do |ins|
-          offset = ins[2][:line]-1
-          act = @lines[offset]
-          md = ReInspect.match(act) or fail("hack fail near #{act.inspect}")
-          md = md.to_hash
-          if md2 = ReHere.match(md[:var])
-            md[:var] = md2[:keep]
-            erase_to_here offset, md2[:here]
+          # each call below will alter @lines (without shifting them)
+          # accordingly, replacing actual code with pretty code (and comments)
+          case ins[0]
+          when :inspect; process_inspect(ins)
+          when :out;     process_out(ins)
+          else fail("no: #{ins[0].inspect}")
           end
-          use_this = (
-            "#{md[:indent]}#{md[:var]}\n"<<
-            "#{md[:indent]}#{@prefix}#{ins[1]}"
-          )
-          @lines[offset] = use_this
         end
+      end
+
+      # the block content gets output as if it's bare ruby,
+      # the output (whether it was expected or actual we don't care)
+      # gets output with leading comment markers.  All of this nonsense is
+      # bs proof of concept that needs to get blown away by ruby2ruby or
+      # something
+      #
+      def process_out sexp
+        call_offset = sexp[2][:line] - 1
+        first = @lines[call_offset]
+        ReOut =~ first or fail("DocSpec hack fail: Didn't look like "<<
+          "nandoc.out line: #{first.inspect}\nExpecting line to match "<<
+          " #{reOut}")
+        j = call_offset + 1
+        last = @lines.length - 1
+        j += 1 until j > last || ReUntilDo =~ @lines[j]
+        j <= last or fail("DocSpec hack fail: Couldn't find do block "<<
+          "anywhere before EOF with #{ReUntilDo}")
+        do_line = @lines[j]
+        re = re_for_line_with_same_indent_as(do_line)
+        repl_lines = []
+        j += 1
+        repl_from_here = j
+        j += 1 until j > last || re =~ @lines[j]
+        j <= last or fail("DocSpec hack fail: Couldn't find end of do "<<
+          "block anywhere before EOF with #{re}")
+        offset_of_line_with_end = j
+        repl_lines = @lines[repl_from_here..offset_of_line_with_end-1]
+        repl_lines.any? or fail("DocSpec hack fail -- no lines")
+        ind_short = leading_indent(do_line)
+        ind_long  = leading_indent(repl_lines.first)
+        ind_diff = string_diff_assert(ind_long, ind_short)
+        unindent = re_for_unindent_gsub(ind_diff)
+        repl_lines.map{ |x| x.sub!(unindent, '') } # this changes @lines val
+        (0..repl_lines.length-1).each do |l|
+          actual_offset = call_offset + l
+          @lines[actual_offset] = repl_lines[l]
+        end
+        erase_from_here = call_offset + repl_lines.length
+        (erase_from_here..offset_of_line_with_end).each do |l|
+          @lines[l] = nil
+        end
+        # this is so fragile, it requires multiline blah blah
+        commented_content = sexp[1].gsub(/^/m, "#{ind_short}# ")
+        @lines[erase_from_here] = commented_content
+        nil
+      end
+      def process_inspect ins, act
+        fail("might be ok but needs testing") # @todo
+        #   act = @lines[offset]
+        # md = ReInspect.match(act) or
+        #   fail("hack fail of nandoc.inspect near #{act.inspect}")
+        # md = md.to_hash
+        # if md2 = ReHere.match(md[:var])
+        #   md[:var] = md2[:keep]
+        #   erase_to_here offset, md2[:here]
+        # end
+        # use_this = (
+        #   "#{repl[:indent]}#{repl[:var]}\n"<<
+        #   "#{repl[:indent]}#{@prefix}#{repl[1]}"
+        # )
+        #
+        # md
       end
     end
   end

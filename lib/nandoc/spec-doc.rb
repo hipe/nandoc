@@ -183,14 +183,29 @@ module NanDoc
         def initialize test_case
           @test_case = test_case
         end
+        def out exp, &block
+          trace = parse_trace_assert(caller.first)
+          prev = $stdout
+          $stdout = StringIO.new
+          captured = nil
+          begin
+            block.call
+          ensure
+            captured = $stdout
+            $stdout = prev
+          end
+          captured.rewind
+          act = captured.read
+          @test_case.assert_no_diff(exp, act)
+          recordings.add(:out, act, trace)
+        end
         def inspect mixed, exp_str = nil
           act_str = mixed.inspect
-          line = caller.first
-          md = parse_trace_assert(line)
+          trace = parse_trace_assert(caller.first)
           if exp_str
             @test_case.assert_no_diff(exp_str, act_str, "at #{line}")
           end
-          recordings.add(:inspect, act_str, md)
+          recordings.add(:inspect, act_str, trace)
         end
         def record_ruby
           md = parse_trace_assert(caller.first)
