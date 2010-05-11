@@ -201,7 +201,8 @@ module NanDoc
         end
         def inspect mixed, exp_str = nil
           act_str = mixed.inspect
-          trace = parse_trace_assert(caller.first)
+          line = caller.first
+          trace = parse_trace_assert(line)
           if exp_str
             @test_case.assert_no_diff(exp_str, act_str, "at #{line}")
           end

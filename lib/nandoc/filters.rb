@@ -474,6 +474,9 @@ module NanDoc::Filters
         re = /\A#{Regexp.escape(ind)}(?=[^ \t])/
         re
       end
+      def re_for_here here
+        /\A[ \t]*#{Regexp.escape(here)}[ \t]*\n?\Z/
+      end
       def re_for_unindent_gsub indent
         re = /\A#{Regexp.escape(indent)}/
         re
@@ -496,11 +499,11 @@ module NanDoc::Filters
         @filter, @sexp, @idx = filter, sexp, idx
       end
       ReInspect =  /\A([ \t]*)(?:nandoc\.inspect[ \t]*)(.+)\Z/
-      NanDoc::RegexpEnhance.names(ReInspect, :indent, :var)
+      NanDoc::RegexpEnhance.names(ReInspect, :indent, :tail)
       ReOut     = /\A[ \t]*nandoc\.out\([ \t]*<<-'?([A-Z]+)/
       ReUntilDo = /\A[ \t]*\)[ \t]*do[ \t]*\Z/
 
-      ReHere = /\A(.*)(?:, ?<<-([A-Z]+))/
+      ReHere = /\A(.*)(?:, ?<<-'?([A-Z]+))/
       NanDoc::RegexpEnhance.names(ReHere, :keep, :here)
 
       ConsumeThese = [:inspect, :out]
@@ -595,22 +598,53 @@ module NanDoc::Filters
         @lines[erase_from_here] = commented_content
         nil
       end
-      def process_inspect ins, act
-        fail("might be ok but needs testing") # @todo
-        #   act = @lines[offset]
-        # md = ReInspect.match(act) or
-        #   fail("hack fail of nandoc.inspect near #{act.inspect}")
-        # md = md.to_hash
-        # if md2 = ReHere.match(md[:var])
-        #   md[:var] = md2[:keep]
-        #   erase_to_here offset, md2[:here]
-        # end
-        # use_this = (
-        #   "#{repl[:indent]}#{repl[:var]}\n"<<
-        #   "#{repl[:indent]}#{@prefix}#{repl[1]}"
-        # )
-        #
-        # md
+
+      #
+      # comments at process_out apply to this too
+      #
+      def process_inspect sexp
+        offset = sexp[2][:line] - 1
+        act = @lines[offset]
+        md = ReInspect.match(act) or
+          fail("hack fail of nandoc.inspect near #{act.inspect}")
+        md = md.to_hash
+        tail = md[:tail]
+        my_lines = []
+        md2 = ReHere.match(tail)
+        return process_inspect_oneline(sexp) unless md2
+        md2 = md2.to_hash
+        ind = leading_indent(@lines[offset])
+        my_lines.push "#{ind}#{md2[:keep]}\n"
+        re = re_for_here(md2[:here])
+        j = offset + 1
+        last = @lines.length - 1
+        until re =~ @lines[j] || j > last
+          back_one = @lines[j].sub(/\A(?:  |\t)/,'')
+          my_lines.push back_one.sub(/\A([\t ]*)/){ "#{$1}#{@prefix}" }
+          j += 1
+        end
+        j > last && fail("DocSpec hack fail: #{md2[:here]} not found "<<
+          "anywhere before EOF")
+        (offset..j).each do |k|
+          @lines[k] = nil
+        end
+        (0..my_lines.length-1).each do |k|
+          l = offset+k
+          @lines[l] = my_lines[k]
+        end
+      end
+
+      def process_inspect_oneline sexp
+        offset = sexp[2][:line] - 1
+        line = @lines[offset]
+        /\A([ \t]*)nandoc.inspect *([^,]+), *([^,]+)\n\Z/ =~ line or fail(
+          "DocSpec hack fail: Why can't we parse this inspect "<<
+          " line?\n#{line.inspect}")
+        ind, keep, val = $1, $2, $3 # actually we don't want $3
+        replace_with = "#{ind}#{keep}\n#{ind}#{@prefix}#{sexp[1]}\n"
+        # assume no newlines in value when the whole thing was oneline
+        @lines[offset] = replace_with
+        nil
       end
     end
   end
