@@ -21,12 +21,15 @@ enable_output_diff: false
 
 
 # nanDoc: here is an example deployment config node.
-# uncomment this, get it right, and try `rake deploy:rsync` from your mysite
-# directory
+# uncomment this, get it right, and try
+# `rake config={default|rubyforge} deploy:rsync` from your mysite
+# directory (or rake `nandoc:deploy:rsync` whatever that does.)
+#
 # deploy:
 #   default:
 #     dst: "hipeland.org:/var/sites/nandoc.hipeland.org"
-#
+#   rubyforge:
+#     dst: hipe@rubyforge.org:/var/www/gforge-projects/nandoc
 
 # The data sources where nanoc loads its data from. This is an array of
 # hashes; each array element represents a single data source. By default,

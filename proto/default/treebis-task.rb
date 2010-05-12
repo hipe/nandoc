@@ -4,6 +4,7 @@
 # to the folder containing this file.
 
 Treebis.tasks.task(:default) do
+  prop   :lay_over_nanoc_site?, true
   # opts[:patch_hack] = true
   remove  './content/index.html' # assume we will use README.md for now.
                                  # we don't want multiple '/' @items.
