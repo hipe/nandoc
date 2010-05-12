@@ -5,7 +5,9 @@ This document presents three implementation alternatives of NanDoc site creation
 
 ### Prototypes
 
-Each folder in this folder is a 'prototype' nanoc installation. (Probably only one folder, called 'default'.)  (The folder called 'misc' holds one-off templates for ad-hoc stuff, maybe for helpers etc.)
+Almost each folder in this folder is a 'prototype' nanDoc installation.  Most users will only ever use the `default` prototype and not worry about other prototypes.
+
+The folder called 'misc' holds one-off templates for ad-hoc stuff, maybe for helpers etc.
 
 The result of each such prototype is comparable to the filetree you get from a default nanoc 'create_site' command, but altered accordingly to be a NanDoc site, whatever that will come to mean.
 
@@ -14,7 +16,7 @@ The result of each such prototype is comparable to the filetree you get from a d
 
 The prototype site(s) in this folder is probably expressed as a cangeset to an existing default filetree created by `nanoc create_site <my-site>`.  Given that the default NanDoc site is rougly 90% the same as a default Nanoc3 site ATTOTW, the author felt that it would be best to represent the default NanDoc site as a diff of the default Nanoc site.[^1]
 
-[^1]: At such time as this percentage drops significantly we will reconsider this decision.
+[^1]: At such time as this percentage drops significantly we will reconsider this decision. -- @todo this is no longer the case.
 
 Thus the changesets here are the minimal readable expression of changes we want to make to a default nanoc site tree, to alter it to be a default NanDoc
 site tree.  These changesets are expressed using a Treebis 'patch' which is some files along with a Treebis task.  (See documentation there for gory details.)
