@@ -13,11 +13,14 @@ module NanDoc
 
     def aliases; [ 'cnds', 'cns', 'cs' ] end # override create_site short!
 
-    def short_desc; 'create a nandoc site' end
+    def short_desc
+      "#{NanDoc::Config.option_prefix}create a nandoc site"
+    end
 
     def long_desc
+      prefix = NanDoc::Config.option_prefix
       <<-D.gsub(/\n +/,' ')
-      (nanDoc hack) Create a new site at the given path. This builds on the
+      #{prefix}Create a new site at the given path. This builds on the
       create_site nanoc3 command.  Please see that for more
       information.  Run this next to your README.md file.
       D
@@ -26,19 +29,22 @@ module NanDoc
     def usage; "nandoc create_nandoc_site [-m] <path>" end
 
     def option_definitions
-      [
-        { :long => 'patch-hack', :short => 'p', :argument => :none,
-          :desc => '(nanDoc hack) use files not patches when necessary' },
+      @opt_defs ||= begin
+        prefix = NanDoc::Config.option_prefix
+        [
+          { :long => 'patch-hack', :short => 'p', :argument => :none,
+            :desc => "#{prefix} use files not patches when necessary" },
 
-        { :long => 'merge-hack', :short => 'm', :argument => :none,
-          :desc =>
-            '(nanDoc hack) when site already exists do something clever'
-        },
-        { :long => 'merge-hack-reverse', :short => 'M', :argument => :none,
-          :desc =>
-            '(nanDoc hack) show the reverse diff of above.'
-        }
-      ]
+          { :long => 'merge-hack', :short => 'm', :argument => :none,
+            :desc =>
+              "#{prefix}when site already exists do something clever"
+          },
+          { :long => 'merge-hack-reverse', :short => 'M', :argument => :none,
+            :desc =>
+              "#{prefix}show the reverse diff of above."
+          }
+        ]
+      end
     end
 
     #

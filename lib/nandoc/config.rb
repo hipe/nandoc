@@ -49,6 +49,29 @@ module NanDoc
         end
       end
     end
+
+    #
+    # Give some visual distinction of what options for a given command
+    # are a nanDoc hack
+    #
+    def option_prefix_colorized
+      "(\e[35mnanDoc\e[0m) "
+    end
+
+    def option_prefix_no_color
+      '(nanDoc hack) '
+    end
+
+    def option_prefix
+      colorize? ?
+        option_prefix_colorized :
+        option_prefix_no_color
+    end
+
+    #
+    # other parts of the app include this module to get convenience methods
+    # to some of the config nodes.
+    #
     module Accessors
       def file_utils
         NanDoc::Config.file_utils

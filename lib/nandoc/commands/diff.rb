@@ -12,7 +12,9 @@ module NanDoc::Commands
 
     def aliases; [ 'd' ] end
 
-    def short_desc; 'maybe push and pull some stuff (nanDoc hack)' end
+    def short_desc
+      "#{NanDoc::Config.option_prefix}maybe push and pull some stuff"
+    end
 
     def long_desc
       <<-LONG_DESC.gsub(/\n +/,' ')
