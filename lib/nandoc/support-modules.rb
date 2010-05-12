@@ -16,9 +16,12 @@ module NanDoc
     def normalize_opts opts
       opts = opts.dup
       opts.keys.select{|x| x.to_s.index('-') }.each do |k|
-        opts[k.to_s.gsub('-','_').to_sym] = opts.delete(k)
+        opts[normalize_opt_key(k)] = opts.delete(k)
       end
       opts
+    end
+    def normalize_opt_key k
+      k.to_s.gsub('-','_').to_sym
     end
     def unnormalize_opt_keys keys
       keys.map{|x| unnormalize_opt_key(x)}
