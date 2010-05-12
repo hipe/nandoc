@@ -1,7 +1,7 @@
 # nanDoc news
 
 ### 0.0.2 (2010-05-12)
-* Add: little debugging version to deploy:rsync task
+* add: little debugging version to deploy:rsync task
 
 ### 0.0.1 (2010-05-11)
 * nanDoc is ready for its closeup!
