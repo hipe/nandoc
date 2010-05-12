@@ -4,7 +4,7 @@ namespace :nandoc do
     desc "#{prefix} Upload the compiled site using rsync, shows command"
     task :rsync do
       require 'nandoc/deployers/rsync'
-      
+
       dry_run     = !!ENV['dry_run']
       config_name = ENV['config'] || :default
 
