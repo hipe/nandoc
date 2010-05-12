@@ -42,6 +42,10 @@ module NanDoc
           { :long => 'merge-hack-reverse', :short => 'M', :argument => :none,
             :desc =>
               "#{prefix}show the reverse diff of above."
+          },
+          { :long => 'prototype', :short=>'t', :argument => :required,
+            :default => 'default',
+            :desc => "#{prefix}the name of the site prototype to use"
           }
         ]
       end
@@ -53,8 +57,13 @@ module NanDoc
     # stderr hack off.
     #
     def run(opts, args, method_opts={:_merge=>true})
+      args = store_extra_args(args)
       opts = normalize_opts opts
       run_opts_process opts
+
+      return prototype_run_without_nanoc(args) unless
+        @treebis_task.lay_over_nanoc_site?
+
       #
       # awful: see if nanoc triggers the error message about site
       # already existing, then take action
@@ -82,6 +91,10 @@ module NanDoc
     end
 
     def run_opts_process opts
+
+      # not sure where to put this
+      initiate_the_supreme_hack_of_the_standard_error_stream
+
       task_abort("you can't have both -M and -m") if
         opts[:merge_hack] && opts[:merge_hack_reverse]
       if opts[:datasource]
@@ -92,16 +105,26 @@ module NanDoc
       end
       opts[:datasource] = 'nandoc'
       @patch_hack = opts[:patch_hack]
+      prototype_determine opts
       nil
     end
     private :run_opts_process
 
   protected
 
+    def err *a
+      $stderr.puts(*a)
+    end
+
+    def my_exit
+      exit(1);
+    end
+
     #
     # see SupremeStderrHack
     #
     def initiate_the_supreme_hack_of_the_standard_error_stream
+      return if @extremely_hacked
       base = Nanoc3::CLI::Base
       return if base.instance_methods.include?("print_error_orig")
       base.send(:alias_method, :print_error_orig, :print_error)
@@ -109,8 +132,54 @@ module NanDoc
         $stderr = SupremeStderrHack.new($stderr)
         print_error_orig error
       end
+      @extremely_hacked = true
     end
 
+    def prototype_determine opts
+      proto_name = opts[:prototype] || 'default'
+      require 'nandoc/support/treebis-extlib' # experimental
+      proto_path = "#{NanDoc::Root}/proto/#{proto_name}"
+      @treebis_task = Treebis.dir_task(proto_path)
+    end
+
+    def prototype_run
+      task = @treebis_task
+      names = task.erb_variable_names
+      if names.any?
+        require 'nandoc/erb/agent'
+        Erb::Agent.process_erb_values_from_the_commandline(
+          self, task, names, @extra_args
+        )
+      end
+      task.file_utils = Config.file_utils
+      task.on(FileUtils.pwd).run(:patch_hack => @patch_hack)
+    end
+
+    def prototype_run_without_nanoc args
+      if args.empty?
+        err "missing <path> argument."
+        err usage
+        my_exit
+      end
+      if args.size > 1
+        err "Too many arguments"
+        err usage
+        my_exit
+      end
+      path = args.first
+      if File.exist?(path) && Dir[path+'/*'].any?
+        err "folder already exists (no merge yet): #{path}"
+        err usage
+        my_exit
+      end
+      if ! File.exist?(path)
+        fu = Config.file_utils
+        fu.mkdir_p(path)
+      end
+      FileUtils.cd(path) do
+        prototype_run
+      end
+    end
 
     def site_already_exists opts, args
       path = args.first
@@ -127,7 +196,14 @@ module NanDoc
       end
     end
 
-
+    def store_extra_args args
+      @extra_args = nil
+      if args.length > 1 && args[1] =~ /^-/
+        @extra_args = args[1..-1]
+        args = args[0..0]
+      end
+      args
+    end
 
     #
     # This is the crux of the whole thing: make the site as the parent
@@ -136,11 +212,8 @@ module NanDoc
     def site_populate
       initiate_the_supreme_hack_of_the_standard_error_stream
       super
-      task = Treebis.dir_task(NanDoc::Root+'/proto/default')
-      task.file_utils = Config.file_utils
-      task.on(FileUtils.pwd).run(:patch_hack => @patch_hack)
+      prototype_run
     end
-
 
     #
     # Somehow legitimize these awful hacks with an entire class
@@ -200,13 +273,14 @@ module NanDoc
         when :looking_for_error_header
           if a.first && a.first.include?('/!\ ERROR /!\\')
             @state = :waiting_for_end_of_error_box
+            me = NanDoc::Config.option_prefix
             @ui.puts <<-HERE.gsub(/^ +/,'')
-           +--- /!\ ERROR /!\ --------------------------------------------+
-           | An exception occured while running nandoc. If you think this |
-           | is a bug in nandoc (likely), please report it at             |
-           | <http://github.com/hipe/nandoc/issues> -- thanks!            |
-           | (it is very likely a treebis patch failure)                  |
-           +--------------------------------------------------------------+
+        +--- /!\\ ERROR /!\\ ----------------------------------------------+
+        | An exception occured while running #{me}. If you think     |
+        | this is a bug in nanDoc (likely), please report it at          |
+        | <http://github.com/hipe/nandoc/issues> -- thanks!              |
+        | (it is very likely a treebis patch failure)                    |
+        +----------------------------------------------------------------+
            HERE
           else
             @ui.puts(*a) # probably just whitespace?
