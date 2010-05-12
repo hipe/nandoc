@@ -10,15 +10,15 @@ Jeweler::Tasks.new do |s|
   s.description = NanDoc::ParseReadme.description('README')
   s.email = 'chip.malice@gmail.com'
   s.executables = ['nandoc']
-  s.files =  FileList['[A-Z]*(?:\.md)?', '{bin,doc,lib,test}/**/*']
+  s.files =  FileList['Rakefile', '[A-Z]*(?:\.md)?', '{bin,doc,lib,test,proto}/**/*']
   s.homepage = 'http://nandoc.hipeland.org'
   s.name = 'nandoc'
   s.rubyforge_project = 'nandoc'
   s.summary = NanDoc::ParseReadme.summary('README')
 
-  s.add_dependency 'nanoc3', '>= 1.3.6'
-  s.add_dependency 'treebis'
-  s.add_dependency 'syntax' # for highlighting ruby
+  s.add_dependency 'nanoc3', '~> 3.1.2'
+  s.add_dependency 'treebis', '~> 0.0.1'
+  s.add_dependency 'syntax', '~> 1.0.0'
 end
 
 
