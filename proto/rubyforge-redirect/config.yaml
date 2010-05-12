@@ -1,0 +1,4 @@
+# added by nanDoc (not really):
+deploy:
+  default:
+    dst: <%= rubyforge_username %>@rubyforge.org:/var/www/gforge-projects/<%= rubyforge_project_name %>

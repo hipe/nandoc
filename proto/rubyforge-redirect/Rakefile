@@ -1,0 +1,2 @@
+require 'nanoc3/tasks'
+require 'nandoc/tasks'
