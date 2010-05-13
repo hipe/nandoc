@@ -7,11 +7,15 @@ module NanDoc::SpecDoc
     #
 
     @for_test_case = {}
+    @for_key = {}
 
     class << self
       attr_accessor :for_test_case
       def get test_case
         @for_test_case[test_case.class] ||= new(test_case.class)
+      end
+      def get_for_key key
+        @for_key[key] ||= new(key)
       end
       def report_test_case_not_found tc
         msgs = ["no recordings found for #{tc}"]
