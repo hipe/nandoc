@@ -1,6 +1,8 @@
 ### Abstract
 
-This document presents three implementation alternatives of NanDoc site creation, and then explains why we are going with the one we are going with at the time of this writing.  (It was also a chance for me to experiment with markdown footnotes!)
+The target audience of this document is developers *of* nanDoc, not developers using nanDoc.
+
+This document introduces the use of [treebis](http://treebis.hipeland.org) tasks for use in representing site prototypes and generating prototype sites; and presents three implementation alternatives of NanDoc site creation, and then explains why we are going with the one we are going with at the time of this writing.  (It was also a chance for me to experiment with markdown footnotes!)
 
 
 ### Prototypes
