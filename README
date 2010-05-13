@@ -65,10 +65,12 @@ To hack, try something like this:
     ~/tmp/nandoc > gem install -n ~/bin pkg/nandoc-0.0.0.gem
     ~~~
 
+before actually trying to use it, if you get that far, please read this [proviso](/proviso).
+
 
 ## Usage Summary
 
-Start with  a markdown-formatted README file:
+Start with a markdown-formatted README file:
 
 (see: test.rb - "basic usage -- readme")
 
