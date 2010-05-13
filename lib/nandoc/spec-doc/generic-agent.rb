@@ -6,11 +6,11 @@ module NanDoc::SpecDoc
     #
 
     include ParseTrace
-    
+
     def initialize whatever
       @whatever = whatever
     end
-    
+
     def record_ruby
       caller_info = parse_trace_assert(caller.first)
       snip = CodeSnippet.new(caller_info)
@@ -18,7 +18,7 @@ module NanDoc::SpecDoc
       @last_snip = snip
       nil
     end
-    
+
     def record_ruby_stop
       line = caller.first
       caller_info = parse_trace_assert(line)
@@ -26,7 +26,7 @@ module NanDoc::SpecDoc
       "record_stop at #{line}")
       @last_snip.stop_at caller_info
     end
-    
+
     # override the one that requires we are in a method
     def story name
       recordings.add :story, name
