@@ -9,7 +9,7 @@ this is a hack. this is nanDoc.
 
 ## Summary
 
-hack of [nanoc3](http://nanoc.stoneship.org) to generate a static site of your ruby project from your README etc.
+hack of [nanoc3](http://nanoc.stoneship.org) to generate a static site of your (command-line) ruby project from your README etc.
 
 ## Description
 
