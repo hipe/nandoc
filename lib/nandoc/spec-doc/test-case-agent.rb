@@ -51,7 +51,7 @@ module NanDoc::SpecDoc
     end
   private
     def recordings
-      Recordings.get(@test_case)
+      ::NanDoc::SpecDoc::Recordings.get(@test_case)
     end
   end
 end
