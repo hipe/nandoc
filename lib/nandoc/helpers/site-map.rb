@@ -1,3 +1,6 @@
+require 'nandoc/support/shared-attr-reader'
+require 'nandoc/support/secret-parent'
+
 module NanDoc::Helpers::NanDocHelpers
 
   #
