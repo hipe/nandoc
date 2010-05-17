@@ -6,7 +6,7 @@ module NanDoc::Erb
     #
 
     class << self
-      include NanDoc::OptsNormalizer # unnormalize_opt_keys
+      include NanDoc::Cli::OptionMethods
 
       # put parameter values from the command line into the erb files
       # in the task
@@ -30,7 +30,7 @@ module NanDoc::Erb
       def args_none
         err "Please provide args for the erb templates."
         show_usage
-        my_exit
+        command_abort
       end
 
       def args_parse
@@ -39,7 +39,7 @@ module NanDoc::Erb
           unless /\A--([-_a-z0-9]*)=(.+)\Z/ =~ str
             err "couldn't parse #{str.inspect} -- expecting \"--foo='bar'\""
             show_usage
-            my_exit
+            command_abort
           end
           hash[normalize_opt_key($1)] = $2
         end
@@ -64,7 +64,7 @@ module NanDoc::Erb
         err "missing erb parameter(s): #{miss.join(' ')}" if miss.any?
         if miss.any? or suck.any?
           show_usage;
-          my_exit
+          command_abort
         end
         have
       end
@@ -73,7 +73,7 @@ module NanDoc::Erb
         $stderr.puts(*a)
       end
 
-      def my_exit
+      def command_abort
         exit(1)
       end
 
