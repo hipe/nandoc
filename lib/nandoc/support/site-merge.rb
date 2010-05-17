@@ -11,7 +11,7 @@ module NanDoc
     end
     def site_merge opts, args
       existing_site_path = args.first
-      task_abort("it's not exist: #{path}") unless
+      command_abort("it's not exist: #{path}") unless
         File.exist?(existing_site_path)
       # nanoc writes to stdout so we do too, but here we want to write
       # to stderr these notices, and write the diff to stdout
