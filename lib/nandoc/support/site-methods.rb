@@ -23,7 +23,7 @@ module NanDoc
         end
         path
       else
-        task_abort <<-D.gsub(/^  */,'')
+        command_abort <<-D.gsub(/^  */,'')
           site path not found: #{args.first.inspect}
           usage: #{usage}
           #{invite_to_more_command_help}
@@ -37,14 +37,14 @@ module NanDoc
           path
         else
           persistent_set('last_site_path',false)
-          task_abort <<-D.gsub(/^  */,'')
+          command_abort <<-D.gsub(/^  */,'')
           previous site path is stale (#{path.inspect}) and no site provided
           usage: #{usage}
           #{invite_to_more_command_help}
           D
         end
       else
-        task_abort(
+        command_abort(
         'no site path provided and no site path in persistent data file '<<
         "(#{NanDoc.dotfile_path})\n"<<
         <<-D.gsub(/^ */,'')
@@ -61,7 +61,7 @@ module NanDoc
     #
     def parse_config_for_site_path path
       config_path = config_path_for_site_path( path )
-      task_abort("config file for app not found: #{config_path}") unless
+      command_abort("config file for app not found: #{config_path}") unless
         File.exist?(config_path)
       YAML.load_file config_path
     end
