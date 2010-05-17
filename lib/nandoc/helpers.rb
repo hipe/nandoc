@@ -1,7 +1,7 @@
 module NanDoc::Helpers
   module NanDocHelpers
     # @todo-now test this
-    include NanDoc::StringFormatting # indent() unindent() no_blank_lines()
+    include NanDoc::StringMethods # indent() unindent() no_blank_lines()
     module BlockAttrAccessor
       attr_accessor :block_attr_accessors
       class << self
