@@ -1,6 +1,9 @@
 # Frequently Asked Questions
 <span style='font-size: 0.9em'><em>I can't walk 2 blocks outside my home without some stranger coming up to me and asking me one or more of these questions.</em></span>
 
+## Q: What about other test frameworks?
+<p class='answer'>A: If you think you can patch nanDoc (SpecDoc) to work with your favorite testing framework, patches welcome!</p>
+
 ## Q: Why not jekyll?
 <p class='answer'>A: I started this knowing nothing about jekyll.  nanoc3 found me and i was already acquainted with its author and i liked what i saw so i just ran with it without doing a broad survey of other solutions.  At the time of this writing i still don't really know jekyll. @todo</p>
 
