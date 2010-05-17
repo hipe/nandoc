@@ -17,7 +17,7 @@ Jeweler::Tasks.new do |s|
   s.summary = NanDoc::ParseReadme.summary('README')
 
   s.add_dependency 'nanoc3', '~> 3.1.2'
-  s.add_dependency 'treebis', '~> 0.0.1'
+  s.add_dependency 'treebis', '~> 0.0.2'
   s.add_dependency 'syntax', '~> 1.0.0'
 end
 
