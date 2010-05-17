@@ -1,3 +1,5 @@
+require 'nandoc/cli'
+
 module NanDoc
 
   class DataSource < ::Nanoc3::DataSources::FilesystemUnified
@@ -12,8 +14,7 @@ module NanDoc
     # Some of the hacks in this file are the worst in the whole project. @todo
     #
 
-
-    include NanDoc::TaskCommon # task_abort()
+    include Cli::CommandMethods # command_abort
 
     def initialize *a
       super(*a)
@@ -110,7 +111,7 @@ module NanDoc
     # this is NanDoc.
     #
     def error_for_no_files files
-      task_abort <<-HERE.gsub(/\n +/,"\n").strip
+      command_abort <<-HERE.gsub(/\n +/,"\n").strip
       No matching content file(s) found at or under (#{files.join(', ')})
       from here. (This corresponds to the 'source_file_basenames' setting in
       config.yaml.)  Did you generate the NanDoc site in the right directory?
@@ -189,7 +190,7 @@ module NanDoc
     # (undefined on name collision)
     #
     def orphan_rescue items
-      require File.expand_path('../support/orphanage.rb', __FILE__)
+      require 'nandoc/support/orphanage.rb'
       Orphanage.rescue_orphans(@config, items)
     end
 
