@@ -7,7 +7,8 @@ module NanDoc
     #
 
 
-    include OptsNormalizer, TaskCommon, CliCommandHelpers
+    include Cli::CommandMethods
+    include Cli::OptionMethods
 
     def name; 'create_nandoc_site' end
 
@@ -95,10 +96,10 @@ module NanDoc
       # not sure where to put this
       initiate_the_supreme_hack_of_the_standard_error_stream
 
-      task_abort("you can't have both -M and -m") if
+      command_abort("you can't have both -M and -m") if
         opts[:merge_hack] && opts[:merge_hack_reverse]
       if opts[:datasource]
-        task_abort <<-ABO.gsub(/\n */,"\n").strip
+        command_abort <<-ABO.gsub(/\n */,"\n").strip
         for now datasource is hardcoded to be nandoc.
         usage: #{usage}
         ABO
@@ -114,10 +115,6 @@ module NanDoc
 
     def err *a
       $stderr.puts(*a)
-    end
-
-    def my_exit
-      exit(1);
     end
 
     #
@@ -138,7 +135,7 @@ module NanDoc
     def prototype_determine opts
       proto_name = opts[:prototype] || 'default'
       require 'nandoc/support/treebis-extlib' # experimental
-      proto_path = "#{NanDoc::Root}/proto/#{proto_name}"
+      proto_path = "#{Config.proto_path}/#{proto_name}"
       @treebis_task = Treebis.dir_task(proto_path)
     end
 
@@ -159,18 +156,18 @@ module NanDoc
       if args.empty?
         err "missing <path> argument."
         err usage
-        my_exit
+        command_abort
       end
       if args.size > 1
         err "Too many arguments"
         err usage
-        my_exit
+        command_abort
       end
       path = args.first
       if File.exist?(path) && Dir[path+'/*'].any?
         err "folder already exists (no merge yet): #{path}"
         err usage
-        my_exit
+        command_abort
       end
       if ! File.exist?(path)
         fu = Config.file_utils
@@ -184,7 +181,7 @@ module NanDoc
     def site_already_exists opts, args
       path = args.first
       if ! (opts[:merge_hack] || opts[:merge_hack_reverse])
-        task_abort <<-FOO.gsub(/^ +/,'').chop
+        command_abort <<-FOO.gsub(/^ +/,'').chop
           A site at '#{path}' already exists.
           If you want to try and merge in changes from the site generator
           (this might just generate a diff), try the --merge-hack (-m) option.
