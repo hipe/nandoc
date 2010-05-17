@@ -1,4 +1,3 @@
-require 'ruby-debug'
 require 'syntax/convertors/html'
 require 'nandoc/spec-doc/ruby2ruby-standin'
 
