@@ -7,6 +7,7 @@ describe 'Basic' do
   Treebis::PersistentDotfile.include_to(self, '.nandoc.persistent.json')
   include Treebis::DirAsHash
   include Treebis::Sopen2
+  include NanDoc::SpecDoc # really just loads nandoc/extlib/minitest
 
   def file_utils
     @fu ||= NanDoc::Config.file_utils
