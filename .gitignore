@@ -1,6 +1,6 @@
 *.gemspec
 NOGIT-*
-my-site*
-mysite*
+mysite/tmp/*
+mysite/output/*
 *.persistent.json
 pkg
