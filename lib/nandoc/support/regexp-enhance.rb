@@ -35,6 +35,12 @@ module NanDoc
         end
       end
     end
+    def match_assert str, name=nil
+      match(str) or begin
+        use_name = name || "/#{source}/"
+        fail("#{use_name} failed to match #{str.inspect}")
+      end
+    end
     def names *list
       if list.any?
         @names = list
