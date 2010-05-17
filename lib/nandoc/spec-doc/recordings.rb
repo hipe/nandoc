@@ -10,7 +10,7 @@ module NanDoc::SpecDoc
     @for_key = {}
 
     class << self
-      attr_accessor :for_test_case
+      attr_accessor :for_test_case, :for_key
       def get test_case
         @for_test_case[test_case.class] ||= new(test_case.class)
       end
