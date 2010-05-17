@@ -1,15 +1,16 @@
-require 'stringio'
-require File.expand_path('../../test/minitest-extlib.rb', __FILE__)
+require 'nandoc/spec-doc/test-framework/proxy'
 
-module NanDoc::SpecDoc::MiniTest
-  class Proxy < ::NanDoc::SpecDoc::TestFrameworkProxy
-
-    def initialize(*a)
-      super(*a)
-      @hacked_minitest = false
-    end
+module NanDoc::SpecDoc::TestFramework::MiniTest
+  class Proxy < ::NanDoc::SpecDoc::TestFramework::Proxy
+    #
+    # our central nexus interflux for all interactions that require mini-test
+    #
 
   private
+
+    def initialize
+      @hacked_minitest = false
+    end
 
     #
     # given
