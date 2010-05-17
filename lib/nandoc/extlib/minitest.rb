@@ -1,5 +1,5 @@
 require 'diff/lcs'
-require(File.dirname(__FILE__)+'/diff-to-string.rb')
+require 'nandoc/support/diff-to-string'
 
 module MiniTest
   module Assertions
