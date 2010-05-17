@@ -6,7 +6,10 @@ require support + '/site-methods.rb'
 module NanDoc::Commands
   class Diff < ::Cri::Command
     NanDoc.persistent_delegate_to(self) # persistent_set(), persistent_get()
-    include NanDoc::CliCommandHelpers, NanDoc::PathTardo, NanDoc::SiteMethods
+    include NanDoc::Cli::CommandMethods
+    include NanDoc::Cli::OptionMethods
+    include NanDoc::PathTardo
+    include NanDoc::SiteMethods
 
     def name; 'diff' end
 
@@ -95,7 +98,7 @@ module NanDoc::Commands
       path_src = deduce_subfolder_path site_path, src
       path_dst = deduce_subfolder_path site_path, dest
       if path_src == path_dst
-        task_abort("source and destination paths are the same. "<<
+        command_abort("source and destination paths are the same. "<<
         "did you forget -p or -P ?\nusage: #{usage}\n"<<
         invite_to_more_command_help)
       end
@@ -123,7 +126,7 @@ module NanDoc::Commands
 
     def deduce_layout_paths src, dest, site_path
       if [src, dest].index(:output)
-        task_abort "Sorry, it doesn't make sense to look at layout " <<
+        command_abort "Sorry, it doesn't make sense to look at layout " <<
         "in output directory because there is none.\n" <<
         "Please use -P or -p to compare layout btwn proto and <my-site>.\n"<<
         "usage: #{usage}\n#{invite_to_more_command_help}"
@@ -148,8 +151,8 @@ module NanDoc::Commands
         else; fail("unimplemented subset: #{subset}")
       end
       src_path, dest_path = paths
-      assert_path "source path",      src_path
-      assert_path "destination path", dest_path
+      command_path_assert "source path",      src_path
+      command_path_assert "destination path", dest_path
       [src_path, dest_path]
     end
 
@@ -182,7 +185,7 @@ module NanDoc::Commands
         when :diff_root_subset; diff_root_subset(src_path, dest_path)
       end
       if diff.error?
-        task_abort diff.error
+        command_abort diff.error
       end
       diff
     end
@@ -218,7 +221,7 @@ module NanDoc::Commands
 
     def subsets
       cmd = self
-      @subsets ||= OptEnum.new do |oe|
+      @subsets ||= option_enum.new do |oe|
         command cmd
         name :subset
         values %w(css layouts js root)
@@ -231,10 +234,10 @@ module NanDoc::Commands
       result = path_tardo(config, 'data_sources/[0]/site_prototype')
       if result.found?
         thing_in_config = result.value
-        full_path = "proto/#{thing_in_config}"
+        full_path = NanDoc::Config.proto_path+"/#{thing_in_config}"
         full_path
       else
-        task_abort(
+        command_abort(
           result.error_message + " in " + config_path_for_site_path(site_path)
         )
       end
@@ -244,7 +247,7 @@ module NanDoc::Commands
     def process_diff_opts opts
       if (bad = opts.keys & PatchPassThru).any?
         bads = bad.map{|x| unnormalize_opt_key(x)}.join('and')
-        task_abort "#{bads} cannot be used with diffing only patching.\n"<<
+        command_abort "#{bads} cannot be used with diffing only patching.\n"<<
           "usage: #{usage}\n#{invite_to_more_command_help}"
       end
     end
@@ -265,7 +268,7 @@ module NanDoc::Commands
     def process_patch_opts_for_directory switch_h, opts, src, dest, site_path
       return unless opts[:subset] == 'root'
       if ! opts[:proto_to_content]
-        task_abort("we need to test this for root patching for this target")
+        command_abort("we need to test this for root patching for this target")
       end
       # it's not explicitly an available pass-thru option
       fail("huh?") if switch_h['--directory'] ||
