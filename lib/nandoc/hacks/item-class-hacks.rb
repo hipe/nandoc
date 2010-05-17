@@ -1,3 +1,5 @@
+require 'nandoc/support/string-methods.rb'
+
 class Nanoc3::Item
   #
   # hacks we use for stuff like sitemap and topnav generation
@@ -13,7 +15,7 @@ class Nanoc3::Item
   end
 
 
-  include NanDoc::StringFormatting # basename_no_extension()
+  include NanDoc::StringMethods # basename_no_extension()
 
   attr_accessor :identifier # know what you are doing if you set it
 
