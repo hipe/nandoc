@@ -72,7 +72,7 @@ module NanDoc
       end
       attr_reader :rule_list
       def when(re_or_symbol, opts=nil, &block)
-        if re_or_symbol.kind_of?(Regexp) && Hash===opts && ! block_given?
+        if re_or_symbol.kind_of?(::Regexp) && Hash===opts && ! block_given?
           add_regex_rule(re_or_symbol, opts)
         elsif re_or_symbol.kind_of?(Symbol) && opts.nil? && block_given?
           define_state(re_or_symbol, &block)
