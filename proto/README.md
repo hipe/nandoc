@@ -7,7 +7,7 @@ This document introduces the use of [treebis](http://treebis.hipeland.org) tasks
 
 ### Prototypes
 
-Almost each folder in this folder is a 'prototype' nanDoc installation.  Most users will only ever use the `default` prototype and not worry about other prototypes.
+Almost each folder in this folder is a 'prototype' nanDoc installation.  Most users will only ever use the `default` prototype and not worry about other prototypes. (maybe.)
 
 The folder called 'misc' holds one-off templates for ad-hoc stuff, maybe for helpers etc.
 
