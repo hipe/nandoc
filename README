@@ -1,5 +1,4 @@
-<embed
-  style='position: absolute; right:0; top:0'
+<embed id='sunburst'
   src="svg/less-fonts.svg" width="150px" height="150px"
   type="image/svg+xml"
   pluginspage="http://www.adobe.com/svg/viewer/install/" />
