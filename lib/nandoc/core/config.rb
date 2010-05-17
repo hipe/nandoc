@@ -2,18 +2,14 @@ module NanDoc
   module Config
     extend self
 
-    #
-    # this name etc etc
-    #
-
-    @orphan_surrogate_filename = Root + '/proto/misc/orphan-surrogate.md'
-    attr_accessor :orphan_surrogate_filename
-
+    # items appear alphabetically.  thought about using dsl for config like ramaze
+    # but nah. why bother.
 
     #
-    # in the future make this smarter.  i don't like now nanoc handles color
+    # Whether to output cli output in color. Without color probably doesn't work
+    # @todo in the future make this smarter.  i don't like now nanoc handles color
     # (a command line argument?) There should be an autodetect, and/or set
-    # last setting in sticky json file; or however it is it is done. @todo
+    # last setting in sticky json file; or however it is it is done.
     #
     def colorize?
       true
@@ -67,6 +63,19 @@ module NanDoc
         option_prefix_colorized :
         option_prefix_no_color
     end
+
+    root = ::Gem::GemPathSearcher.new.find('nandoc').full_gem_path
+
+    @orphan_surrogate_filename = root + '/proto/misc/orphan-surrogate.md'
+    attr_accessor :orphan_surrogate_filename
+
+    Treebis::PersistentDotfile.extend_to(NanDoc,
+      './nandoc.persistent.json',
+      :file_utils => self.file_utils
+    )
+
+    @proto_path = root + '/proto'
+    attr_accessor :proto_path
 
     #
     # other parts of the app include this module to get convenience methods
