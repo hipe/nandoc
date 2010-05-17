@@ -18,7 +18,7 @@ module NanDoc::Helpers::NanDocHelpers
   # @api private
   #
   class MenuBouncy
-    include NanDoc::StringFormatting
+    include NanDoc::StringMethods
     def initialize(binding, &block)
       @separator_default = '&gt;'
       @tab = '  '
