@@ -1,4 +1,8 @@
 module NanDoc
+  #
+  # @dependencies: none
+  #
+
   class ParseReadme
     #
     # If you are really really crazy then you don't like
