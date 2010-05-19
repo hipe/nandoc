@@ -83,23 +83,32 @@ module NanDoc
         @args = args
       end
       attr_reader :error
-      def command
-        Shellwords.join(@args)
-      end
-      def error?; ! @error.empty? end
-      def full_error_message
-        "diff failed: #{command}\ngot error: #{error}"
-      end
-      def ok?; ! error? end
-      def to_s
-        @out
-      end
       def colorize out, opts={}
         colorizer = self.class.stream_colorizer_prototype.spawn do |c|
           c.stylesheet_merge(opts[:styles] || {})
         end
         colorizer.filter(to_s, out)
         nil
+      end
+      def command
+        Shellwords.join(@args)
+      end
+      def error?
+        ! @error.empty?
+      end
+      def full_error_message
+        "diff failed: #{command}\ngot error: #{error}"
+      end
+      def ok?
+        ! error?
+      end
+      attr_reader :out
+      def reject_only_in!
+        @out.gsub!(/^Only in [^\n]+\n/,'')
+        nil
+      end
+      def to_s
+        @out
       end
     end
     class Fail < RuntimeError;
