@@ -74,6 +74,9 @@ module NanDoc
       :file_utils => self.file_utils
     )
 
+    @patch_path = root + '/lib/nandoc/patch/patches'
+    attr_accessor :patch_path
+
     @proto_path = root + '/proto'
     attr_accessor :proto_path
 
