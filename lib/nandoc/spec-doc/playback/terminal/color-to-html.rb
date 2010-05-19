@@ -24,12 +24,12 @@ module NanDoc::SpecDoc::Playback::Terminal::ColorToHtml
     html = linez.join("\n")
     html
   end
-  
+
   def prompt_highlight2 prompt, cmd
     "<span class='prompt'>#{h(prompt)}</span>"<<
     "<span class='normal'>#{h(cmd)}</span>\n"
   end
-  
+
   # this sucks.
   #
   # the other side of these associations lives in trollop-subset.css
@@ -37,7 +37,7 @@ module NanDoc::SpecDoc::Playback::Terminal::ColorToHtml
     '1' => 'bright',  '30' => 'black', '31' => 'red', '32' => 'green',
     '33' => 'yellow', '34' => 'blue', '35' => 'magenta', '36' => 'cyan',
     '37' => 'white'
-  }      
+  }
   def terminal_color_to_html str
     return nil unless str.index("\e[") # save a whale
     scn = StringScanner.new(str)
