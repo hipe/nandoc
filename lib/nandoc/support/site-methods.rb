@@ -46,7 +46,7 @@ module NanDoc
       else
         command_abort(
         'no site path provided and no site path in persistent data file '<<
-        "(#{NanDoc.dotfile_path})\n"<<
+        "(#{NanDoc.dotfile_paths.join(', ')})\n"<<
         <<-D.gsub(/^ */,'')
         usage: #{usage}
         #{invite_to_more_command_help}
