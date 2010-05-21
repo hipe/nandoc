@@ -38,5 +38,6 @@ end
 
 here = File.dirname(__FILE__)+'/helpers'
 require here + '/menu-bouncy.rb'
+require here + '/rcov.rb'
 require here + '/site-map.rb'
 require here + '/top-nav.rb'
