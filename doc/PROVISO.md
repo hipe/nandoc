@@ -3,7 +3,7 @@
 ## proviso
 
 
-### nanDoc is not nandoc
+### nanDoc is not nanoc
 
 nanDoc is affiliated with nanoc by name only.  They are separate projects with separate authors.  Negative experiences with nan<em>Doc</em> should not inform your pre-judgement of nan<em>oc</em> and vice versa.  (Positive experiences, however, should ;)
 
@@ -14,7 +14,7 @@ There is a uni-directional dependency upon nanoc by nanDoc.  In nature this is c
 
 ### nanDoc is alpha software
 
-nanDoc is an experimental means to an end.  I need a way to integrate code in my tests ("specs") with documentation generation to make sites like this for 4 or 5 of my gems.  (If others find it useful along the way, ponies.)
+nanDoc is an experimental means to an end.  i need a generate documentation for 4 or 5 of my gems and I really want tot do it by generating a lot of the examples from my existing specs.  With whatever I come up with to this end, if others happen to find it useful then ponies.  If not then it won't be the first publicly available gem I make that falls in the forest without making a sound.
 
 breif discussions with the author of nanoc have lead me to believe that this use might be better served by looking at the `@example` tag available in YARD and [custom templates](http://gnuu.org/2009/11/18/customizing-yard-templates/) as opposed to going batshit insane with my wild hacks as i have thus far done;
 but i do not have time to get up to speed on YARD now, much less overhaul nanDoc.
