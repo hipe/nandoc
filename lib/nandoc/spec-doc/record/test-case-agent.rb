@@ -1,6 +1,6 @@
 module NanDoc::SpecDoc
   class TestCaseAgent
-    include ParseTrace, AgentInstanceMethods, ::Treebis::Capture3
+    include ParseTrace, AgentMethods, ::Treebis::Capture3
     def initialize test_case
       @test_case = test_case
     end
@@ -34,6 +34,12 @@ module NanDoc::SpecDoc
       end
       recordings.add(:inspect, act_str, trace)
     end
+    # for setting a generic method marker. no builtin playback (?)
+    def record
+      md = parse_trace_assert(caller.first)
+      snip = CodeSnippet.new(md)
+      recordings.add(:method, snip.method)
+    end
     def record_ruby
       md = parse_trace_assert(caller.first)
       snip = CodeSnippet.new(md)
@@ -49,7 +55,6 @@ module NanDoc::SpecDoc
       "record_stop at #{line}")
       @last_snip.stop_at md
     end
-  private
     def recordings
       ::NanDoc::SpecDoc::Recordings.get(@test_case)
     end
