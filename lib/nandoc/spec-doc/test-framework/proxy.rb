@@ -30,11 +30,15 @@ module NanDoc::SpecDoc::TestFramework
       NanDoc::Project.instance.require_test_file(testfile)
       test_case, meth_name = find_test testname
       run_test_case_method testfile, testname, test_case, meth_name
-      recs = ::NanDoc::SpecDoc::Recordings.for_test_case[test_case] or
-        fail(::NanDoc::SpecDoc::Recordings.
-                               report_test_case_not_found(test_case))
-      sexp = recs.get_first_sexp_for_test_method(meth_name) or
-        fail recs.report_recording_not_found(meth_name)
+      recs = ::NanDoc::SpecDoc::Recordings.for_test_case[test_case] or begin
+        msg = ::NanDoc::SpecDoc::Recordings.
+                               report_test_case_not_found(test_case)
+        fail(msg)
+      end
+      sexp = recs.get_first_sexp_for_test_method(meth_name) or begin
+        msg = recs.report_recording_not_found(meth_name)
+        fail(msg)
+      end
       sexp
     end
 
