@@ -31,6 +31,10 @@ module NanDoc::SpecDoc::Playback
       while node = scn.current
         if these.key?(node.first)
           record = these[node.first]
+          if record.first == :skip
+            scn.offset += 1
+            next
+          end
           break if record.first == :stop
           handler = get_tag_filter(record)
           handler.send(record[2], doc, scn)
