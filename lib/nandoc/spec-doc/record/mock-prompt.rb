@@ -1,6 +1,3 @@
-require 'nandoc'
-require 'nandoc/spec-doc'
-
 module NanDoc
   class MockPrompt
     #
@@ -10,7 +7,7 @@ module NanDoc
     #
 
     include Treebis::Sopen2
-    include SpecDoc::AgentInstanceMethods
+    include SpecDoc::AgentMethods
 
 
     def initialize test_case=nil
