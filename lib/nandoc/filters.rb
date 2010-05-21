@@ -1,10 +1,14 @@
 # registers self at bottom!
+module NanDoc::Filters
+end
+
 here = File.dirname(__FILE__)
-require here+'/filters/custom-tags.rb'
-require here+'/filters/tag-parse-instance-methods.rb'
-require here+'/filters/builtin-tags.rb'
 require here+'/spec-doc.rb'
-require here+'/spec-doc/playback'
+require here+'/filters/custom-tag.rb'
+require here+'/filters/custom-tags.rb'
+require here+'/filters/tag-parser.rb'
+require here+'/filters/builtin-tags.rb'
+
 
 module NanDoc::Filters
   class General < ::Nanoc3::Filter

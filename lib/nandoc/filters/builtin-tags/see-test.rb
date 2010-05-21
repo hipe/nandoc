@@ -1,11 +1,7 @@
 require 'strscan'
-require 'nandoc/spec-doc'
-require 'nandoc/spec-doc/playback'
-require 'nandoc/html'
-
 module NanDoc::Filters
   class SeeTest
-    include TagParseInstanceMethods
+    include NanDoc::StringMethods
   private
     Re = %r{\(see:[ ]*(?:spec|test)[^\s]+
       (?:
@@ -38,8 +34,9 @@ module NanDoc::Filters
         things = []
         loop do
           scn2.skip(%r<\s*(?:--?|/)\s*>)
-          this = scn2.scan(/ '[^']*' | "[^"]*" | [^\s'"]+ /x) or
+          this = scn2.scan(/ '[^']*' | "[^"]*" | [^\s'"]+ /x) or begin
             fail("internal parse fail near #{scn2.rest.inspect}")
+          end
           things.push unquote(this)
           scn2.skip(/\)\s*/)
           scn2.eos? and break

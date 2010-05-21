@@ -1,6 +1,3 @@
-require 'nandoc/spec-doc/playback'
-require 'nandoc/spec-doc/ruby2ruby-standin'
-
 module NanDoc::Filters::Fence
   class Terminal
     include NanDoc::SpecDoc::Ruby2RubyStandin

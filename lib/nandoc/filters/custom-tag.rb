@@ -1,10 +1,8 @@
 require 'strscan'
-require File.dirname(__FILE__)+'/tag-parser.rb'
-require 'nandoc/spec-doc'
 
 module NanDoc::Filters
   class CustomTag
-    include TagParsingInstanceMethods
+    # include TagParsingInstanceMethods
     def initialize
     end
     def name
