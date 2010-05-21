@@ -1,3 +1,5 @@
+# to use this independently of nandoc you need nanoc3 and this file
+
 module NanDoc; end
 module NanDoc::SpecDoc; end
 module NanDoc::SpecDoc::Playback; end
@@ -59,7 +61,10 @@ module NanDoc::SpecDoc::Playback::Terminal::ColorToHtml
       else
         sexp.push([:push, *baz.split(';')])
       end
-      biff = scn.scan(/m/) or fail("noiflphh")
+      scn.scan(/;/) # maybe maybe not? todo whatever
+      biff = scn.scan(/m/) or begin
+        fail("noiflphh: #{scn.rest}")
+      end
     end
     html = terminal_colorized_sexp_to_html sexp
     html
@@ -88,8 +93,12 @@ private
         end
         throw :done if i > last
         case sexp[i].first
-          when :content; parts.push(sexp[i][1])
-          when :pop; parts.push('</span>')
+          when :content
+            raw_content = sexp[i][1]
+            echhi = html_escape(raw_content)
+            parts.push(echhi)
+          when :pop
+            parts.push('</span>')
           else; fail('fook');
         end
       end
