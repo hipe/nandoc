@@ -1,5 +1,5 @@
 require 'minitest/spec'
-require 'nandoc/spec-doc/mock-prompt'
+require 'nandoc/spec-doc'
 
 MiniTest::Unit.autorun
 
