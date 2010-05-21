@@ -1,5 +1,3 @@
-require 'nandoc/spec-doc/playback'
-
 module NanDoc::SpecDoc::Playback
   class Method
     # "playback" a recorded ruby (test?) method, generating html
@@ -36,8 +34,14 @@ module NanDoc::SpecDoc::Playback
       proj = NanDoc::Project.instance
       proxy = proj.test_framework_proxy_for_file(@test_file_path)
       sexp = proxy.sexp_get @test_file_path, @things.first
-      run_sexp(doc, sexp, *@things[1..-1])
+      run_method_sexp(doc, sexp, *@things[1..-1])
       nil
+    end
+    def run_method_sexp doc, sexp, story=nil
+      scn = SexpScanner.new(sexp)
+      scn.scan_assert(:method)
+      scn.skip_to_after_assert(:story, story) if story
+      run_scanner doc, scn
     end
     def run_note out, scn
       node = scn.scan_assert(:note)
@@ -45,12 +49,10 @@ module NanDoc::SpecDoc::Playback
       out.push_raw note_content
       nil
     end
-  private
-    def run_sexp doc, sexp, story=nil
-      scn = SexpScanner.new(sexp)
-      scn.scan_assert(:method)
-      scn.skip_to_after_assert(:story, story) if story
-      node = scn.current or fail("unexpected end of sexp")
+    def run_scanner doc, scn
+      node = scn.current or begin
+        fail("unexpected end of sexp")
+      end
       run_sexp_with_handlers(doc, scn)
       if ! scn.eos?
         node = scn.current
@@ -59,6 +61,10 @@ module NanDoc::SpecDoc::Playback
         end
       end
       nil
+    end
+    def run_sexp doc, sexp
+      scn = SexpScanner.new(sexp)
+      run_scanner doc, scn
     end
   end
 end
