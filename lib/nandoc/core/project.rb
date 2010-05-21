@@ -12,6 +12,11 @@ module NanDoc
     end
   public
 
+    def new_test_framework_proxy name
+      require 'nandoc/spec-doc' unless NanDoc.const_defined?('SpecDoc')
+      SpecDoc.new_test_framework_proxy name
+    end
+
     # not especially robust at all
     def project_root
       @project_root ||= begin
@@ -42,8 +47,7 @@ module NanDoc
 
     def test_framework_proxy_for_file path
       @the_only_proxy ||= begin
-        require 'nandoc/spec-doc/test-framework/mini-test/proxy'
-        SpecDoc::TestFramework::MiniTest::Proxy.new
+        new_test_framework_proxy('MiniTest')
       end
     end
   end
