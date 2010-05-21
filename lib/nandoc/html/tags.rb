@@ -14,12 +14,12 @@ module NanDoc::Html
       @content.push str
     end
 
-    def push_smart name, classes, content
+    def push_smart name, classes, content, opts={}
       tag = normalize_tag(name, classes)
-      if @current != tag
+      if @current != tag || opts.any?
         flush if @current
         @current = tag
-        @content.push render_open_tag(tag)
+        @content.push render_open_tag(tag, opts)
       end
       @content.push content
       nil
@@ -52,9 +52,10 @@ module NanDoc::Html
       "</#{name}>"
     end
 
-    def render_open_tag tag
+    def render_open_tag tag, opts={}
+      xtra = opts.any? ? (' '+opts.map{|x,y| "#{x}='#{y}'"}.join(' ') ) : ''
       name, classes = tag
-      "<#{name} class='#{classes.join(' ')}'>"
+      "<#{name} class='#{classes.join(' ')}'#{xtra}>"
     end
 
     def normalize_tag name, classes
