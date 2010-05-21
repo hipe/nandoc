@@ -1,0 +1,7 @@
+me = File.dirname(__FILE__)+'/record/'
+require me + 'agent-methods.rb'
+require me + 'code-snippet.rb'
+require me + 'generic-agent.rb'
+require me + 'mock-prompt.rb'
+require me + 'recordings.rb'
+require me + 'test-case-agent.rb'
