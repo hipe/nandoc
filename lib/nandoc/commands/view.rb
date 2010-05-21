@@ -3,8 +3,8 @@ module NanDoc::Commands
     def short_desc
       spr = super
       "#{NanDoc::Config.option_prefix}#{spr} (plus blah blah)"
-    end    
-    
+    end
+
     def run opts, args
       require 'nandoc/patch'
       patch = NanDoc::Patch.load(NanDoc::Config.patch_path+'/view-xml-indexes')
