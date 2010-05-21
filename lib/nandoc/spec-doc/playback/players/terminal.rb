@@ -1,6 +1,3 @@
-require 'nandoc/spec-doc/playback'
-require 'nandoc/spec-doc/playback/terminal/color-to-html'
-
 module NanDoc::SpecDoc::Playback
   class Terminal
     # playback things like as if my name was sega

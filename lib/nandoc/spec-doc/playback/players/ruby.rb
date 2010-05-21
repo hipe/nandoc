@@ -1,8 +1,4 @@
 require 'syntax/convertors/html'
-require 'nandoc/spec-doc/ruby2ruby-standin'
-
-# require 'nandoc/spec-doc/playback'
-
 
 module NanDoc::SpecDoc::Playback
   class Ruby
