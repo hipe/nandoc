@@ -5,8 +5,16 @@ module NanDoc
     def basename_no_extension str
       /([^\/\.]+)(?:\.[^\.\/]+)?\Z/ =~ str ? $1 : nil
     end
+    def fileize const_basename
+      resp = const_basename.gsub(/([a-z])([A-Z])/){ "#{$1}-#{$2}" }.downcase
+      resp
+    end
     def indent str, indent
       str.gsub(/^/, indent)
+    end
+    # whatevs this is cosmetic and subject to change
+    def myshelljoin argv
+      argv.map{|x| x.index(' ') ? "\"#{x}\"" : x }.join(' ')
     end
     def no_blank_lines str
       str.gsub(/\n[[:space:]]*\n/, "\n")
@@ -51,6 +59,14 @@ module NanDoc
     def unindent str, by=nil
       by ||= (/\A([ \t]*)/ =~ str and $1 )
       str.gsub(/^#{Regexp.escape(by)}/, '')
+    end
+
+    def unquote str
+      case str
+        when /\A'(.*)'\Z/ ; $1
+        when /\A"(.*)"\Z/ ; $1
+        else str
+      end
     end
   end
 end
