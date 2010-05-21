@@ -1,5 +1,3 @@
-require 'nandoc/spec-doc/test-framework/proxy'
-
 module NanDoc::SpecDoc::TestFramework::MiniTest
   class Proxy < ::NanDoc::SpecDoc::TestFramework::Proxy
     #
