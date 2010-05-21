@@ -57,7 +57,7 @@ module NanDoc::Filters
             ok = true
             break
           else
-            debugger; 'x'
+            fail("unhandled case: #{sym.inspect}")
           end
         end
         if ok
