@@ -6,6 +6,7 @@ here = File.dirname(__FILE__)
 require here+'/spec-doc.rb'
 require here+'/filters/custom-tag.rb'
 require here+'/filters/custom-tags.rb'
+require here+'/filters/no-entities.rb'
 require here+'/filters/tag-parser.rb'
 require here+'/filters/builtin-tags.rb'
 
@@ -89,3 +90,4 @@ module NanDoc::Filters
 end
 
 Nanoc3::Filter.register ::NanDoc::Filters::General, :nandoc
+Nanoc3::Filter.register ::NanDoc::Filters::NoEntities, :nandoc_no_entities
