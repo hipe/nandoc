@@ -12,6 +12,9 @@ module NanDoc
     def indent str, indent
       str.gsub(/^/, indent)
     end
+    def module_basename mixed
+      mixed.to_s =~ /([^:]*)\Z/ and $1
+    end
     # whatevs this is cosmetic and subject to change
     def myshelljoin argv
       argv.map{|x| x.index(' ') ? "\"#{x}\"" : x }.join(' ')
