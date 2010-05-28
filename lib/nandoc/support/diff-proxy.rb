@@ -17,11 +17,14 @@ module NanDoc
       else
         block.call
       end
-      diff = Diff.new(out, err, args)
+      diff = diff_class.new(out, err, args)
       if diff.error?
         return fail(diff.full_error_message){|f| f.diff = diff }
       end
       diff
+    end
+    def diff_class
+      Diff
     end
   private
     def fail(*a, &b)
